@@ -16,6 +16,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -67,6 +71,13 @@ dependencies {
 
     // Add the Firebase SDK for Crashlytics.
     implementation 'com.google.firebase:firebase-crashlytics:17.0.0-beta01'
+
+    //butterknife
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
+
+    //loading progress bars
+    implementation 'com.github.ybq:Android-SpinKit:1.4.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

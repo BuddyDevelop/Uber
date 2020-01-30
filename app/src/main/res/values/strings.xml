@@ -72,7 +72,10 @@
     <string name="customer_pickup">Customer pickup</string>
     <string name="no_driver_nearby">Could\'t find any driver nearby.</string>
     <string name="cannot_switch_to_customer">Cannot change to customer while you have ride!</string>
+    <string name="driver_toggle_btn_not_allowed">You are not a driver or does not have internet connection.</string>
     <string name="driver_arrived">Driver\'s here</string>
+    <string name="phone_number">Phone number</string>
+    <string name="user_profile_image">user_profile_image</string>
 
 
 </resources>

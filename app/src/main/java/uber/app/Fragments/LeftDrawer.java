@@ -18,14 +18,17 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.ToggleDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
+import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
 import uber.app.Activities.MapActivity;
 import uber.app.Activities.HistoryActivity;
+import uber.app.Activities.ProfileActivity;
 import uber.app.R;
 import uber.app.SharedPref;
 
 import static uber.app.Helpers.FirebaseHelper.logoutUser;
 import static uber.app.Helpers.FirebaseHelper.mFirebaseUser;
+import static uber.app.Helpers.FirebaseHelper.mUser;
 
 public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
     private final int HISTORY = 1;
@@ -89,7 +92,6 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
                 .withIdentifier( LOGOUT )
                 .withSelectable( false );
 
-
         //drawer header
         mDrawerHeader = new AccountHeaderBuilder()
                 .withActivity( mMapActivity )
@@ -101,6 +103,19 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
                                 .withIcon( mUserIcon )
                 )
                 .withSelectionListEnabledForSingleProfile( false )
+                .withOnAccountHeaderProfileImageListener( new AccountHeader.OnAccountHeaderProfileImageListener() {
+                    @Override
+                    public boolean onProfileImageClick( View view, IProfile profile, boolean current ) {
+                        Intent intent = new Intent( mMapActivity, ProfileActivity.class );
+                        mMapActivity.startActivity( intent );
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onProfileImageLongClick( View view, IProfile profile, boolean current ) {
+                        return false;
+                    }
+                } )
                 .build();
 
         //drawer content
@@ -134,6 +149,12 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
                 logoutUser( mMapActivity );
                 break;
             case ISDRIVER:
+                //if user has no connection button is visible by customer
+                if( mUser == null || !mUser.isDriver() ){
+                    mMapActivity.showMessage( mMapActivity.getResources().getString( R.string.driver_toggle_btn_not_allowed ) );
+                    return false;
+                }
+
                 if( mMapActivity.getDriverHelper() == null || mMapActivity.getDriverHelper().getCustomerId() == null ) {
                     if ( SharedPref.getBool( "isDriver" ) ) {
                         Location driverLocation = mMapActivity.getLastLocation();
