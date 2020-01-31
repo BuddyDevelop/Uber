@@ -16,6 +16,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import uber.app.Activities.RegisterActivity;
 import uber.app.Cache;
@@ -42,6 +44,8 @@ public class FirebaseHelper {
     public static final GeoFire mGeoFireWorkingDrivers = new GeoFire( mWorkingDriversDbRef );
     public static final GeoFire mGeoFireAvailableDrivers = new GeoFire( mAvailableDriversDbRef );
     public static final GeoFire mGeoFireCustomerUberRequest = new GeoFire( mCustomerUberRequest );
+
+    public static final StorageReference mProfileImageStorageRef = FirebaseStorage.getInstance().getReference().child( "profileImages" );
 
     public static void getUserData( final Context context ){
         userIdString = FirebaseAuth.getInstance().getUid();

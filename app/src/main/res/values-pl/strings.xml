@@ -54,4 +54,15 @@
     <string name="customer_pickup">Obierz klienta</string>
     <string name="change_to_customer">Zmienić na klienta?</string>
     <string name="cannot_switch_to_customer">Nie można zmienić klienta podczas jazdy!</string>
+    <string name="driver_toggle_btn_not_allowed">Nie jesteś kierowcą lub nie masz połączenia z internetem.</string>
+    <string name="error_uploading_image">Coś poszło nie tak i zdjęcie nie mogło zostać przesłane.</string>
+    <string name="history_menu_item">Historia</string>
+    <string name="menu_gallery">Galeria</string>
+    <string name="menu_home">Ekran główny</string>
+    <string name="menu_send">Wyślij</string>
+    <string name="menu_share">Udostępnij</string>
+    <string name="menu_tools">Narzędzia</string>
+    <string name="phone_number">Numer telefonu</string>
+    <string name="storage_permissions_denied">Aby załadować wybrany obraz, potrzebne są uprawnienia do czytania pamięci.</string>
+    <string name="title_activity_driver_map">Mapa</string>
 </resources>

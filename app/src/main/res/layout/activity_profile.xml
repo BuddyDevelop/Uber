@@ -18,8 +18,9 @@
         <!--android:scaleType="centerCrop"-->
 
         <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
+            android:layout_width="130dp"
+            android:layout_height="150dp"
+            android:id="@+id/user_profile_image"
             android:layout_gravity="center_horizontal"
             android:contentDescription="@string/user_profile_image"
             android:layout_marginTop="-60dp"

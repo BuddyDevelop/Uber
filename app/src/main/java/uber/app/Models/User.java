@@ -1,7 +1,7 @@
 package uber.app.Models;
 
 public class User {
-    private String name, email, surname, token;
+    private String name, email, surname, token, profileImageUrl;
     private boolean driver;
 
     public User(){}
@@ -11,6 +11,14 @@ public class User {
         this.email = email;
         this.surname = surname;
         this.driver = driver;
+    }
+
+    public User( String name, String email, String surname, boolean driver, String profileImageUrl ){
+        this.name = name;
+        this.email = email;
+        this.surname = surname;
+        this.driver = driver;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public User( boolean isDriver, String email, String name, String surname, String token ) {
@@ -58,4 +66,8 @@ public class User {
     public void setDriver( boolean driver ) {
         this.driver = driver;
     }
+
+    public String getProfileImageUrl() { return profileImageUrl; }
+
+    public void setProfileImageUrl( String profileImageUrl ) { this.profileImageUrl = profileImageUrl; }
 }
