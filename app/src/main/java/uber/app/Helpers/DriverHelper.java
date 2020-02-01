@@ -54,9 +54,11 @@ public class DriverHelper {
                     mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, false );
                     mMapActivity.leftDrawer.disableDriverToggleButtonState();
                     getAssignedCustomerPickupLocation( customerId );
+                    mMapActivity.getUserInfo( customerId );
                 }
                 else {
                     mMapActivity.leftDrawer.enableDriverToggleButtonState();
+                    mMapActivity.hideUserInfo();
                     mMapActivity.resetDriverHelper();
                 }
             }
@@ -89,6 +91,9 @@ public class DriverHelper {
                         mMapActivity.addMarkerWithTitleAndIcon( customerLatLng, customerLocationMarker,
                                 BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ));
                     }
+                }
+                else {
+                    mMapActivity.hideUserInfo();
                 }
             }
 

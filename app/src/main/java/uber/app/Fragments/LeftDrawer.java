@@ -42,9 +42,17 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
     private DrawerBuilder drawerBuilder;
     private AccountHeader mDrawerHeader;
 
+    private ProfileDrawerItem userProfile;
+
     private PrimaryDrawerItem historyDrawerItem;
     private ToggleDrawerItem isDriverToggleDrawerItem;
     private PrimaryDrawerItem logoutDrawerItem;
+
+    public Drawer getDrawer() { return mDrawer; }
+
+    public AccountHeader getDrawerHeader() { return mDrawerHeader; }
+
+    public ProfileDrawerItem getUserProfile() { return userProfile; }
 
     public PrimaryDrawerItem getHistoryDrawerItem() {
         return historyDrawerItem;
@@ -68,6 +76,12 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
         String mFirebaseUserEmail = mFirebaseUser.getEmail();
         Drawable mUserIcon = mMapActivity.getResources().getDrawable( R.drawable.profile_image, null );
 
+        //profile
+        userProfile = new ProfileDrawerItem()
+                .withName( mFirebaseUserName )
+                .withEmail( mFirebaseUserEmail )
+                .withIdentifier( 1 )
+                .withIcon( mUserIcon );
          /*
             Drawer items
          */
@@ -84,7 +98,7 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
                 .withIdentifier( ISDRIVER )
                 .withSelectable( false );
         isDriverToggleDrawerItem.setToggleEnabled( false );
-        isDriverToggleDrawerItem.setChecked( SharedPref.getBool( "isDriver" ) );
+//        isDriverToggleDrawerItem.setChecked( SharedPref.getBool( "isDriver" ) );
         //logout item
         logoutDrawerItem = new PrimaryDrawerItem()
                 .withName( R.string.logout )
@@ -95,19 +109,15 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
         //drawer header
         mDrawerHeader = new AccountHeaderBuilder()
                 .withActivity( mMapActivity )
-                .withHeaderBackground( R.drawable.header_wallpaper2 )
-                .addProfiles(
-                        new ProfileDrawerItem()
-                                .withName( mFirebaseUserName )
-                                .withEmail( mFirebaseUserEmail )
-                                .withIcon( mUserIcon )
-                )
+                .withHeaderBackground( R.drawable.header_wallpaper )
+                .addProfiles( userProfile )
                 .withSelectionListEnabledForSingleProfile( false )
                 .withOnAccountHeaderProfileImageListener( new AccountHeader.OnAccountHeaderProfileImageListener() {
                     @Override
                     public boolean onProfileImageClick( View view, IProfile profile, boolean current ) {
                         Intent intent = new Intent( mMapActivity, ProfileActivity.class );
                         mMapActivity.startActivity( intent );
+//                        Log.e( "ASD", "onProfileImageClick: " + view.getId()  );
                         return false;
                     }
 

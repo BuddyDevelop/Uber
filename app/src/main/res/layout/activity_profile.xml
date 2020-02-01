@@ -13,17 +13,17 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:contentDescription="@string/nav_header_desc"
-            android:background="@drawable/header_wallpaper2" />
+            android:background="@drawable/header_wallpaper"
+            android:contentDescription="@string/nav_header_desc" />
         <!--android:scaleType="centerCrop"-->
 
         <ImageView
+            android:id="@+id/user_profile_image"
             android:layout_width="130dp"
             android:layout_height="150dp"
-            android:id="@+id/user_profile_image"
             android:layout_gravity="center_horizontal"
-            android:contentDescription="@string/user_profile_image"
             android:layout_marginTop="-60dp"
+            android:contentDescription="@string/user_profile_image"
             android:src="@drawable/profile_image" />
 
         <LinearLayout
@@ -45,11 +45,11 @@
                 android:id="@+id/user_profile_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
                 android:drawablePadding="20dp"
+                android:fontFamily="sans-serif-light"
                 android:text="@string/user_name"
-                android:textStyle="bold"
-                android:textSize="@dimen/text_big" />
+                android:textSize="@dimen/text_big"
+                android:textStyle="bold" />
 
             <View
                 android:layout_width="match_parent"
@@ -60,8 +60,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/user_surname"
                 android:layout_marginTop="@dimen/fab_margin"
+                android:text="@string/user_surname"
                 android:textColor="@color/colorPrimaryDark"
                 android:textSize="16sp" />
 
@@ -69,11 +69,11 @@
                 android:id="@+id/user_profile_surname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
                 android:drawablePadding="20dp"
+                android:fontFamily="sans-serif-light"
                 android:text="@string/user_surname"
-                android:textStyle="bold"
-                android:textSize="@dimen/text_big" />
+                android:textSize="@dimen/text_big"
+                android:textStyle="bold" />
 
             <View
                 android:layout_width="match_parent"
@@ -84,8 +84,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/email"
                 android:layout_marginTop="@dimen/fab_margin"
+                android:text="@string/email"
                 android:textColor="@color/colorPrimaryDark"
                 android:textSize="16sp" />
 
@@ -93,11 +93,11 @@
                 android:id="@+id/user_profile_email"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
                 android:drawablePadding="20dp"
+                android:fontFamily="sans-serif-light"
                 android:text="@string/email"
-                android:textStyle="bold"
-                android:textSize="@dimen/text_big" />
+                android:textSize="@dimen/text_big"
+                android:textStyle="bold" />
 
             <View
                 android:layout_width="match_parent"
@@ -105,28 +105,35 @@
                 android:layout_marginTop="14dp"
                 android:background="@android:color/darker_gray" />
 
-            <!--<TextView-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_marginTop="20dp"-->
-                <!--android:text="@string/phone_number"-->
-                <!--android:textColor="@color/colorPrimaryDark"-->
-                <!--android:textSize="16sp" />-->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/profile_layout_phone_number"
+                android:orientation="vertical">
 
-            <!--<TextView-->
-                <!--android:id="@+id/user_profile_phone_number"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:fontFamily="sans-serif-light"-->
-                <!--android:text="@string/phone_number"-->
-                <!--android:textSize="@dimen/text_big" />-->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/phone_number"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textSize="16sp" />
 
-            <!--<View-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="1dp"-->
-                <!--android:layout_marginTop="14dp"-->
-                <!--android:background="@android:color/darker_gray" />-->
+                <TextView
+                    android:id="@+id/user_profile_phone_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:hint="@string/phone_number"
+                    android:textSize="@dimen/text_big"
+                    android:textStyle="bold" />
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="14dp"
+                    android:background="@android:color/darker_gray" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

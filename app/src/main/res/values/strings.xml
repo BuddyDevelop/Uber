@@ -33,6 +33,7 @@
     <string name="sth_went_wrong_err">Something went wrong with registration, check your connection.</string>
     <string name="signUp">SIGN UP</string>
     <string name="user_name">Name</string>
+    <string name="user_name_colon">Name:</string>
     <string name="user_surname">Surname</string>
     <string name="surname">Surname</string>
     <string name="confirmPassword">Confirm password</string>
@@ -75,9 +76,12 @@
     <string name="driver_toggle_btn_not_allowed">You are not a driver or does not have internet connection.</string>
     <string name="driver_arrived">Driver\'s here</string>
     <string name="phone_number">Phone number</string>
+    <string name="phone_number_colon">Phone number:</string>
     <string name="user_profile_image" translatable="false">user_profile_image</string>
     <string name="storage_permissions_denied">Storage permissions are needed to load selected image.</string>
     <string name="error_uploading_image">Something went wrong and image couldn\'t be uploaded.</string>
+    <string name="phone_number_error">Wrong phone number.</string>
+    <string name="profile">Profile</string>
 
 
 </resources>

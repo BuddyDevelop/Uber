@@ -1,6 +1,7 @@
 package uber.app.Activities;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -8,13 +9,17 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -31,6 +36,7 @@ import java.util.Map;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import uber.app.CompressImage;
+import uber.app.CustomToast;
 import uber.app.OnDataReceiveCallback;
 import uber.app.R;
 
@@ -50,12 +56,17 @@ public class ProfileActivity extends AppCompatActivity {
     TextView userSurname;
     @BindView( R.id.user_profile_email )
     TextView userEmail;
+    @BindView( R.id.user_profile_phone_number )
+    TextView userPhoneNumber;
     @BindView( R.id.user_profile_image )
     ImageView userProfileImage;
+    @BindView( R.id.profile_layout_phone_number )
+    LinearLayout layoutPhoneNumber;
 
     private Circle mCircleUserName;
     private Circle mCircleUserSurname;
     private Circle mCircleUserEmail;
+    private Circle mCircleUserPhone;
 
     private String mProfileImageUrl;
 
@@ -65,10 +76,13 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView( R.layout.activity_profile );
 
         ButterKnife.bind( this );
+        getSupportActionBar().setTitle( R.string.profile );
+        getSupportActionBar().setDisplayHomeAsUpEnabled( true );
 
         initCircles();
         loadUserData();
         onProfileImageClick();
+        onPhoneNumberClick();
     }
 
     private boolean checkReadStoragePermissions() {
@@ -93,22 +107,27 @@ public class ProfileActivity extends AppCompatActivity {
         mCircleUserName = new Circle();
         mCircleUserSurname = new Circle();
         mCircleUserEmail = new Circle();
+        mCircleUserPhone = new Circle();
 
         mCircleUserName.setBounds( 0, 0, 50, 50 );
         mCircleUserSurname.setBounds( 0, 0, 50, 50 );
         mCircleUserEmail.setBounds( 0, 0, 50, 50 );
+        mCircleUserPhone.setBounds( 0, 0, 50, 50 );
 
         mCircleUserName.setColor( Color.BLACK );
         mCircleUserSurname.setColor( Color.BLACK );
         mCircleUserEmail.setColor( Color.BLACK );
+        mCircleUserPhone.setColor( Color.BLACK );
 
         userName.setCompoundDrawables( null, null, mCircleUserName, null );
         userSurname.setCompoundDrawables( null, null, mCircleUserSurname, null );
         userEmail.setCompoundDrawables( null, null, mCircleUserEmail, null );
+        userPhoneNumber.setCompoundDrawables( null, null, mCircleUserPhone, null );
 
         mCircleUserName.start();
         mCircleUserSurname.start();
         mCircleUserEmail.start();
+        mCircleUserPhone.start();
     }
 
     //load user data and fill fields
@@ -125,10 +144,15 @@ public class ProfileActivity extends AppCompatActivity {
                     mCircleUserName.stop();
                     mCircleUserSurname.stop();
                     mCircleUserEmail.stop();
+                    mCircleUserPhone.stop();
 
                     mProfileImageUrl = mUser.getProfileImageUrl();
                     if ( mProfileImageUrl != null && !mProfileImageUrl.isEmpty() )
                         Glide.with( getApplication() ).load( mProfileImageUrl ).into( userProfileImage );
+
+                    String phoneNumber = mUser.getPhoneNumber();
+                    if( phoneNumber != null && !phoneNumber.isEmpty() )
+                        userPhoneNumber.setText( phoneNumber );
                 }
             }
         } );
@@ -211,6 +235,59 @@ public class ProfileActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText( this, R.string.error_uploading_image, Toast.LENGTH_SHORT ).show();
         }
+    }
 
+
+    private void onPhoneNumberClick() {
+        layoutPhoneNumber.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick( View v ) {
+                AlertDialog.Builder builder = new AlertDialog.Builder( ProfileActivity.this );
+                EditText editText = new EditText( ProfileActivity.this );
+                editText.setInputType( InputType.TYPE_CLASS_PHONE );
+
+                builder
+                        .setTitle( R.string.phone_number )
+                        .setView( editText )
+                        .setPositiveButton( R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick( DialogInterface dialogInterface, int i ) {
+                            //Do nothing here because we override this button later to change the close behaviour.
+                            }
+                        })
+                        .setNegativeButton("Cancel", null );
+
+                final AlertDialog dialog = builder.create();
+                dialog.show();
+
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v)
+                    {
+                        Boolean wantToCloseDialog = false;
+                        String editTextInput = editText.getText().toString();
+
+                        if( editTextInput.length() < 8 )
+                            new CustomToast().showToast( ProfileActivity.this, v, getResources().getString( R.string.phone_number_error ) );
+                        else
+                            wantToCloseDialog = true;
+
+                        Map phoneNumberMap = new HashMap<String, String>();
+                        phoneNumberMap.put( "phoneNumber", editTextInput );
+                        mUsersDbRef.child( userIdString ).updateChildren( phoneNumberMap );
+
+
+                        if( wantToCloseDialog )
+                            dialog.dismiss();
+                    }
+                });
+            }
+        } );
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return super.onSupportNavigateUp();
     }
 }

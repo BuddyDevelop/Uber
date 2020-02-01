@@ -14,11 +14,15 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.geofire.GeoFire;
+import com.bumptech.glide.Glide;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -40,11 +44,14 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import uber.app.Helpers.CheckNetwork;
 import uber.app.Helpers.CustomerHelper;
 import uber.app.Helpers.DriverHelper;
 import uber.app.Helpers.FirebaseHelper;
 import uber.app.Fragments.LeftDrawer;
+import uber.app.Models.User;
 import uber.app.OnDataReceiveCallback;
 import uber.app.R;
 import uber.app.SharedPref;
@@ -56,6 +63,7 @@ import static uber.app.Helpers.FirebaseHelper.deleteAvailableDriverLocationFromD
 import static uber.app.Helpers.FirebaseHelper.getFromFirebase;
 import static uber.app.Helpers.FirebaseHelper.mAvailableDriversDbRef;
 import static uber.app.Helpers.FirebaseHelper.mUser;
+import static uber.app.Helpers.FirebaseHelper.mUsersDbRef;
 import static uber.app.Helpers.FirebaseHelper.mWorkingDriversDbRef;
 import static uber.app.Helpers.FirebaseHelper.userIdString;
 import static uber.app.SharedPref.DEFAULT_DOUBLE;
@@ -82,6 +90,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public Toolbar mToolbar;
     public MaterialButton mRequestUberButton;
 
+    @BindView( R.id.info )
+    LinearLayout mInfo;
+    @BindView( R.id.user_name_value )
+    TextView mUserName;
+    @BindView( R.id.user_phone_number_value )
+    TextView mUserPhoneNumber;
+    @BindView( R.id.user_profile_image_map )
+    ImageView mUserImage;
+
     public CustomerHelper getCustomerHelper() {
         return mCustomerHelper;
     }
@@ -89,6 +106,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public DriverHelper getDriverHelper() { return mDriverHelper; }
 
     public Location getLastLocation() { return mLastLocation; }
+
+    public GoogleMap getGoogleMap() {
+        return mMap;
+    }
+
 
     //callback to refresh location
     public LocationCallback mLocationCallback = new LocationCallback() {
@@ -123,6 +145,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient( this );
 
+        ButterKnife.bind( this );
+
         //set toolbar
         setToolbar();
         //change location of my location button on map
@@ -145,6 +169,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 mCustomerHelper.hasCustomerRequest( userIdString );
         }
 
+        updateUIOnDataReceived();
+    }
+
+    private void updateUIOnDataReceived() {
         //do actions on data received
         getFromFirebase( new OnDataReceiveCallback() {
             public void onDataReceived() {
@@ -157,6 +185,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     mDriverHelper.getAssignedCustomer();
                 } else{
                     leftDrawer.removeDriverToggle();
+                }
+
+                //load user's profile image
+                String userProfileImageUrl = mUser.getProfileImageUrl();
+                if( userProfileImageUrl != null && !userProfileImageUrl.isEmpty() ) {
+                    //profile image button id cuz anything else does not work
+                    @SuppressLint( "ResourceType" )
+                    ImageView imageView = findViewById( 2131230902 );
+                    if( imageView != null )
+                            Glide
+                                .with( imageView.getContext() )
+                                .load( userProfileImageUrl )
+                                .into( imageView );
                 }
             }
         } );
@@ -193,10 +234,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 getLastKnownLocation();
             }
         }
-    }
-
-    public GoogleMap getGoogleMap() {
-        return mMap;
     }
 
     private void initializeUberRequestBtn() {
@@ -284,12 +321,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         //change button text
         mRequestUberButton.setText( R.string.pickup_pending );
         //disable button
-        mRequestUberButton.postDelayed( new Runnable() {
-            @Override
-            public void run() {
-                mRequestUberButton.setEnabled( false );
-            }
-        }, 100 );
+        mRequestUberButton.setEnabled( false );
 
         if( pickupLat != DEFAULT_DOUBLE )
             locationMarker = addMarkerWithTitleAndIcon( pickupLatLng, pickupMarkerTitle,
@@ -339,21 +371,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Window window = getWindow(); // get phone's window
 
         Util.setLayoutToFullscreen( window );
-    }
-
-    @SuppressLint( "MissingPermission" )
-    private void connectDriver() {
-        checkLocationPermissions();
-        mFusedLocationProviderClient.requestLocationUpdates( mLocationRequest, mLocationCallback, Looper.myLooper() );
-        mMap.setMyLocationEnabled( true );
-    }
-
-    private void disconnectDriver() {
-        if ( mFusedLocationProviderClient != null ) {
-            mFusedLocationProviderClient.removeLocationUpdates( mLocationCallback );
-        }
-        GeoFire geoFire = new GeoFire( FirebaseHelper.mAvailableDriversDbRef );
-        geoFire.removeLocation( FirebaseHelper.userIdString );
     }
 
     //ask user for permissions
@@ -444,7 +461,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         return null;
     }
 
-    public void changeBtnText( final MaterialButton mRequestUberButton, final int stringResourceId ) {
+    public void changeRequestBtnText( final int stringResourceId ) {
         runOnUiThread( new Runnable() {
             public void run() {
                 mRequestUberButton.setText( stringResourceId );
@@ -469,5 +486,63 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void resetDriverHelper(){
         mDriverHelper.setCustomerId( null );
         mDriverHelper = null;
+    }
+
+    public void showUserInfo() {
+        mInfo.setVisibility( View.VISIBLE );
+    }
+
+    public void hideUserInfo(){
+        mInfo.setVisibility( View.GONE );
+    }
+
+    public void setUserName( String name ){
+        runOnUiThread( new Runnable() {
+            @Override
+            public void run() {
+                mUserName.setText( name );
+            }
+        } );
+    }
+
+    public void setUserPhone( String phone ){
+        runOnUiThread( new Runnable() {
+            public void run() {
+                mUserPhoneNumber.setText( phone );
+            }
+        } );
+    }
+
+    public void setUserImage( String userImage ){
+        runOnUiThread( new Runnable() {
+            @Override
+            public void run() {
+                Glide.with( getApplicationContext() ).load( userImage ).into( mUserImage );
+            }
+        } );
+    }
+
+    //display user info on screen
+    public void getUserInfo( String foundDriverID ){
+        mUsersDbRef.child( foundDriverID ).addListenerForSingleValueEvent( new ValueEventListener() {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
+                if( dataSnapshot.exists() ){
+                    showUserInfo();
+                    User user = dataSnapshot.getValue( User.class );
+                    setUserName( user.getName() + " " + user.getSurname() );
+                    setUserPhone( user.getPhoneNumber() );
+
+                    String userImage = user.getProfileImageUrl();
+                    if( userImage != null && !userImage.isEmpty() )
+                        setUserImage( user.getProfileImageUrl() );
+                }
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError databaseError ) {
+                Log.e( "getUserInfo", "getDriverInfo: " + databaseError.getMessage()  );
+            }
+        } );
     }
 }

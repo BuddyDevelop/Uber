@@ -67,7 +67,7 @@ public class FirebaseHelper {
         } );
     }
 
-    public static void getFromFirebase( final OnDataReceiveCallback callback){
+    public static void getFromFirebase( final OnDataReceiveCallback callback ){
         mUsersDbRef.child( userIdString ).addValueEventListener( new ValueEventListener() {
             @Override
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ){
@@ -170,10 +170,4 @@ public class FirebaseHelper {
             }
         } );
     }
-
-    public static void getUserLocationFromDB( String userIdString ){
-
-    }
-
-
 }

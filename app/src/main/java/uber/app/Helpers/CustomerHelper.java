@@ -24,7 +24,6 @@ import java.util.List;
 import uber.app.Activities.MapActivity;
 import uber.app.R;
 
-import static uber.app.Helpers.FirebaseHelper.addAvailableDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.addWorkingDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.deleteAvailableDriverLocationFromDB;
 import static uber.app.Helpers.FirebaseHelper.deleteWorkingDriverLocationFromDB;
@@ -99,7 +98,7 @@ public class CustomerHelper {
                     foundDriverID = key;
 
                     if ( mMapActivity != null && !mMapActivity.isFinishing() ) {
-                        mMapActivity.changeBtnText( mMapActivity.mRequestUberButton, R.string.getting_driver_location );
+                        mMapActivity.changeRequestBtnText( R.string.getting_driver_location );
                     }
 
                     customerId = FirebaseHelper.userIdString;
@@ -165,13 +164,14 @@ public class CustomerHelper {
 
                         //change uber request btn text
                         if ( mMapActivity != null && !mMapActivity.isFinishing() ) {
-                            mMapActivity.changeBtnText( mMapActivity.mRequestUberButton, R.string.driver_coming );
+                            mMapActivity.changeRequestBtnText( R.string.driver_coming );
 
                             //ensure button is disabled
                             new Handler( Looper.getMainLooper() ).post( new Runnable() {
                                 @Override
                                 public void run() {
                                     mMapActivity.mRequestUberButton.setEnabled( false );
+                                      mMapActivity.getUserInfo( foundDriverID );
                                 }
                             } );
 
@@ -192,11 +192,16 @@ public class CustomerHelper {
                                 float distance = customerLocation.distanceTo( driverCurrentLocation );
 
                                 if ( distance < 100 ) {
-                                    mMapActivity.changeBtnText( mMapActivity.mRequestUberButton, R.string.driver_arrived );
+                                    mMapActivity.changeRequestBtnText( R.string.driver_arrived );
                                 }
                             }
                         }
                     }
+                } else {
+                    mMapActivity.hideUserInfo();
+                    mMapActivity.resetCustomerHelper();
+                    mMapActivity.clearMap();
+                    mMapActivity.enableUberRequestBtn();
                 }
             }
 
@@ -219,7 +224,7 @@ public class CustomerHelper {
                     //update UI
                     if ( mMapActivity != null && !mMapActivity.isFinishing() ) {
                         mMapActivity.disableUberRequestBtn();
-                        mMapActivity.changeBtnText( mMapActivity.mRequestUberButton, R.string.getting_driver_location );
+                        mMapActivity.changeRequestBtnText( R.string.getting_driver_location );
                     }
                 } else {
                     mMapActivity.enableUberRequestBtn();
@@ -246,6 +251,8 @@ public class CustomerHelper {
                 if ( dataSnapshot.exists() ) {
                     setFoundDriverID( dataSnapshot.getValue().toString() );
                     getDriverLocation( foundDriverID );
+
+                      mMapActivity.getUserInfo( foundDriverID );
                 }
                 //user has NOT assigned driver
                 else {
@@ -255,12 +262,13 @@ public class CustomerHelper {
                     mMapActivity.enableUberRequestBtn();
                     mMapActivity.clearMap();
                     mMapActivity.resetCustomerHelper();
+                    mMapActivity.hideUserInfo();
                 }
             }
 
             @Override
             public void onCancelled( @NonNull DatabaseError databaseError ) {
-
+                Log.e( TAG, "hasCustomerDriver: " + databaseError.getMessage()  );
             }
         } );
     }
