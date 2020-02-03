@@ -80,6 +80,7 @@
     <string name="user_profile_image" translatable="false">user_profile_image</string>
     <string name="storage_permissions_denied">Storage permissions are needed to load selected image.</string>
     <string name="error_uploading_image">Something went wrong and image couldn\'t be uploaded.</string>
+    <string name="sth_wrong_error">Something went wrong, try again.</string>
     <string name="phone_number_error">Wrong phone number.</string>
     <string name="profile">Profile</string>
 

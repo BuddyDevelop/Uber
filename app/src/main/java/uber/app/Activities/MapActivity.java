@@ -23,6 +23,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -37,12 +42,17 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -59,6 +69,7 @@ import uber.app.Util;
 
 import static uber.app.Helpers.FirebaseHelper.addAvailableDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.addCustomerLocationToDB;
+import static uber.app.Helpers.FirebaseHelper.addWorkingDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.deleteAvailableDriverLocationFromDB;
 import static uber.app.Helpers.FirebaseHelper.getFromFirebase;
 import static uber.app.Helpers.FirebaseHelper.mAvailableDriversDbRef;
@@ -69,11 +80,11 @@ import static uber.app.Helpers.FirebaseHelper.userIdString;
 import static uber.app.SharedPref.DEFAULT_DOUBLE;
 import static uber.app.Util.changeMapsMyLocationButton;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, RoutingListener {
     private static final int REQUEST_GPS_PERMISSIONS = 1;
-    private static final float MINIMUM_DISTANCE_BETWEEN_MAP_UPDATES = 10;
-    private static final long MINIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 60 * 1000; //1 min
-    private static final long MAXIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 3 * 60 * 1000; //3 min
+    private static final float MINIMUM_DISTANCE_BETWEEN_MAP_UPDATES = 70;
+    private static final long MINIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 20 * 1000; //20 sec
+    private static final long MAXIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 30 * 1000; //30 sec
     private static final float MAP_ZOOM = 16;
 
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -90,6 +101,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public Toolbar mToolbar;
     public MaterialButton mRequestUberButton;
 
+    private List< Polyline > polylines;
+    private static final int[] COLORS = new int[]{ R.color.primary_dark, R.color.primary_dark_material_light };
+
     @BindView( R.id.info )
     LinearLayout mInfo;
     @BindView( R.id.user_name_value )
@@ -102,15 +116,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public CustomerHelper getCustomerHelper() {
         return mCustomerHelper;
     }
-
     public DriverHelper getDriverHelper() { return mDriverHelper; }
-
     public Location getLastLocation() { return mLastLocation; }
-
     public GoogleMap getGoogleMap() {
         return mMap;
     }
-
 
     //callback to refresh location
     public LocationCallback mLocationCallback = new LocationCallback() {
@@ -123,9 +133,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         return;
 
                     mLastLocation = location;
-                    addLocationToDatabase( location.getLatitude(), location.getLongitude() );
                     LatLng latLng = new LatLng( location.getLatitude(), location.getLongitude() );
                     mMap.moveCamera( CameraUpdateFactory.newLatLngZoom( latLng, MAP_ZOOM ) );
+
+                    //update working driver or available driver
+                    if( mUser != null && mUser.isDriver() && mDriverHelper != null && mDriverHelper.getCustomerId() != null ){
+                        addWorkingDriverLocationToDB( userIdString, latLng.latitude, latLng.longitude );
+                    } else if( mUser != null && mUser.isDriver() && SharedPref.getBool( "isDriver" ) ){ //if driver is not a customer
+                        addAvailableDriverLocationToDB( userIdString, latLng.latitude, latLng.longitude );
+                    }
                 }
             }
         }
@@ -140,11 +156,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .findFragmentById( R.id.map );
         mapFragment.getMapAsync( this );
 
+        polylines = new ArrayList<>( );
+
         //get user data from firebase and save in shared pref if user is driver
         FirebaseHelper.getUserData( this );
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient( this );
 
+        //bind views
         ButterKnife.bind( this );
 
         //set toolbar
@@ -155,6 +174,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         leftDrawer = new LeftDrawer( this, mToolbar );
         leftDrawer.initDrawer();
 
+        //set customer or driver
         if ( mUser != null && mUser.isDriver() ) {
             mDriverHelper = new DriverHelper( this );
 
@@ -329,7 +349,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     public void addLocationToDatabase( final double latitude, final double longitude ) {
-        if ( mUser != null && mUser.isDriver() ) {
+        if ( mUser != null && mUser.isDriver() && SharedPref.getBool( "isDriver" ) ) {
             mWorkingDriversDbRef.child( userIdString ).addListenerForSingleValueEvent( new ValueEventListener() {
                 @Override
                 public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
@@ -544,5 +564,71 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Log.e( "getUserInfo", "getDriverInfo: " + databaseError.getMessage()  );
             }
         } );
+    }
+
+    @Override
+    public void onRoutingFailure( RouteException e ) {
+        if( e != null ){
+            Toast.makeText( this, "Error: " + e.getMessage(), Toast.LENGTH_LONG ).show();
+            Log.e( "asd", "onRoutingFailure: " + e.getMessage()  );
+        }else{
+            Toast.makeText( this, R.string.sth_wrong_error, Toast.LENGTH_LONG ).show();
+        }
+    }
+
+    @Override
+    public void onRoutingStart() {  }
+
+    @Override
+    public void onRoutingSuccess( ArrayList<Route> route, int shortestRouteIndex ) {
+        if( polylines.size() > 0 ) {
+            for ( Polyline poly : polylines ) {
+                poly.remove();
+            }
+        }
+
+        polylines = new ArrayList<>();
+        //add route(s) to the map.
+        for ( int i = 0; i < route.size(); i++ ) {
+            int colorIndex;
+            //In case of more than 5 alternative routes
+            if( i == 0 )
+                colorIndex = i;
+            else
+                colorIndex = 1;
+
+
+            PolylineOptions polyOptions = new PolylineOptions();
+            polyOptions.color( getResources().getColor( COLORS[ colorIndex ] ) );
+            polyOptions.width( 10 + i * 3 );
+            polyOptions.addAll( route.get( i ).getPoints() );
+            Polyline polyline = mMap.addPolyline( polyOptions );
+            polylines.add( polyline );
+
+            Toast.makeText( getApplicationContext(),"Route "+ ( i + 1 ) +
+                    ": distance - " + route.get( i ).getDistanceValue() +
+                    ": duration - " + route.get( i ).getDurationValue(), Toast.LENGTH_SHORT )
+                    .show();
+        }
+    }
+
+    @Override
+    public void onRoutingCancelled() {  }
+
+    public void getRouteToLocation( LatLng currentLatLng, LatLng destinationLatLng ){
+        Routing routing = new Routing.Builder()
+                .travelMode( AbstractRouting.TravelMode.DRIVING )
+                .withListener( this )
+                .alternativeRoutes( true )
+                .waypoints( currentLatLng, destinationLatLng )
+                .key( getResources().getString( R.string.google_api_key ) )
+                .build();
+        routing.execute();
+    }
+
+    public void clearPolylines(){
+        for( Polyline line : polylines )
+            line.remove();
+        polylines.clear();
     }
 }

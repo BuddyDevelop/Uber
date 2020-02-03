@@ -15,13 +15,17 @@ Sign-up             |  Login
 
 Customer's main view            | Driver's navigation drawer
 :-------------------------:|:-------------------------:
-<img src="https://user-images.githubusercontent.com/48919056/73265136-a37d6e00-41d4-11ea-88e4-4f4a4aab721f.jpg" alt="Customer main view" width="350" height="730px"/> |  <img src="https://user-images.githubusercontent.com/48919056/73265264-e0e1fb80-41d4-11ea-96bb-4064c085ce12.jpg" alt="Driver's navigation drawer" width="350" height="730px"/>
+<img src="https://user-images.githubusercontent.com/48919056/73265136-a37d6e00-41d4-11ea-88e4-4f4a4aab721f.jpg" alt="Customer main view" width="350" height="730px"/> |  <img src="https://user-images.githubusercontent.com/48919056/73651486-d2885980-4684-11ea-96c7-42c405b70c8f.jpg" alt="Driver's navigation drawer" width="350" height="730px"/>
 
-#### Customer's view with driver on his way.
+
+Customer's view with driver on his way.            | Driver's view with customer assigned.
+:-------------------------:|:-------------------------:
+<img src="https://user-images.githubusercontent.com/48919056/73651402-a4a31500-4684-11ea-8c30-640b27fab081.jpg" alt="Customer view with driver" width="350" height="730px"/> |  <img src="https://user-images.githubusercontent.com/48919056/73651314-77eefd80-4684-11ea-864f-abc9fd980ee5.jpg" alt="Driver's navigation drawer" width="350" height="730px"/>
+
+#### Profile section.
 <p align="middle">
-  <img src="https://user-images.githubusercontent.com/48919056/73351285-edc32580-428e-11ea-909d-c8094bc936c6.jpg" alt="customer view with driver coming" width="350" height="730px"/>
+  <img src="https://user-images.githubusercontent.com/48919056/73651706-49bded80-4685-11ea-9b25-b628fcac8e28.jpg" alt="customer view with driver coming" width="350" height="730px"/>
 </p>
-
 
 <div>
   <sub>

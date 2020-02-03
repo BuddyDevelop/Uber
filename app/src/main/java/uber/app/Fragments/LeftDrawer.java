@@ -98,7 +98,7 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
                 .withIdentifier( ISDRIVER )
                 .withSelectable( false );
         isDriverToggleDrawerItem.setToggleEnabled( false );
-//        isDriverToggleDrawerItem.setChecked( SharedPref.getBool( "isDriver" ) );
+        isDriverToggleDrawerItem.setChecked( true ); //logged driver without customer is just customer
         //logout item
         logoutDrawerItem = new PrimaryDrawerItem()
                 .withName( R.string.logout )
@@ -167,20 +167,22 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
 
                 if( mMapActivity.getDriverHelper() == null || mMapActivity.getDriverHelper().getCustomerId() == null ) {
                     if ( SharedPref.getBool( "isDriver" ) ) {
-                        Location driverLocation = mMapActivity.getLastLocation();
-                        double driverLong = driverLocation.getLongitude();
-                        double driverLat = driverLocation.getLatitude();
-
-                        mMapActivity.addLocationToDatabase( driverLong, driverLat );
                         SharedPref.setBool( "isDriver", false );
-                        isDriverToggleDrawerItem.setChecked( false );
-                        mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, false );
-                    } else {
-                        SharedPref.setBool( "isDriver", true );
                         mMapActivity.deleteLocationFromDatabase();
 
                         isDriverToggleDrawerItem.setChecked( true );
                         mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, true );
+
+                    } else {
+                        SharedPref.setBool( "isDriver", true );
+
+                        Location driverLocation = mMapActivity.getLastLocation();
+                        double driverLong = driverLocation.getLongitude();
+                        double driverLat = driverLocation.getLatitude();
+                        mMapActivity.addLocationToDatabase( driverLong, driverLat );
+
+                        isDriverToggleDrawerItem.setChecked( false );
+                        mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, false );
                     }
                 }else{
                     isDriverToggleDrawerItem.setChecked( false );
@@ -194,7 +196,7 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
     }
 
     public void disableDriverToggleButtonState() {
-        SharedPref.setBool( "isDriver", false );
+        SharedPref.setBool( "isDriver", true );
         new Handler( Looper.getMainLooper() ).post( new Runnable() {
             @Override
             public void run() {
@@ -204,7 +206,7 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
     }
 
     public void enableDriverToggleButtonState() {
-        SharedPref.setBool( "isDriver", true );
+        SharedPref.setBool( "isDriver", false ); //false
         new Handler( Looper.getMainLooper() ).post( new Runnable() {
             @Override
             public void run() {

@@ -1,5 +1,6 @@
 package uber.app.Helpers;
 
+import android.location.Location;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -30,11 +31,9 @@ public class DriverHelper {
     public DriverHelper( MapActivity mMapActivity ) {
         this.mMapActivity = mMapActivity;
     }
-
     public String getCustomerId() {
         return customerId;
     }
-
     public void setCustomerId( String customerId ) {
         this.customerId = customerId;
     }
@@ -60,6 +59,7 @@ public class DriverHelper {
                     mMapActivity.leftDrawer.enableDriverToggleButtonState();
                     mMapActivity.hideUserInfo();
                     mMapActivity.resetDriverHelper();
+                    mMapActivity.clearPolylines();
                 }
             }
 
@@ -72,6 +72,7 @@ public class DriverHelper {
 
     private void getAssignedCustomerPickupLocation( String customerId ) {
         DatabaseReference assignedCustomerPickupLocationRef = mCustomerUberRequest.child( customerId ).child( "l" );
+
         assignedCustomerPickupLocationRef.addListenerForSingleValueEvent( new ValueEventListener() {
             @Override
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
@@ -90,6 +91,11 @@ public class DriverHelper {
                         //add customer's location marker
                         mMapActivity.addMarkerWithTitleAndIcon( customerLatLng, customerLocationMarker,
                                 BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ));
+
+                        Location driverLocation = mMapActivity.getLastLocation();
+                        LatLng driverLatLng = new LatLng( driverLocation.getLatitude(), driverLocation.getLongitude() );
+                        //create route to customer
+                        mMapActivity.getRouteToLocation( driverLatLng, customerLatLng );
                     }
                 }
                 else {
@@ -99,7 +105,7 @@ public class DriverHelper {
 
             @Override
             public void onCancelled( @NonNull DatabaseError databaseError ) {
-                Log.e( TAG, "onCancelled: " + "getAssignedCustomerPickupLocation: " + databaseError.getMessage() );
+                Log.e( TAG, "getAssignedCustomerPickupLocation: " + databaseError.getMessage() );
             }
         } );
     }

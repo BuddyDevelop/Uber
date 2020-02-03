@@ -65,4 +65,9 @@
     <string name="phone_number">Numer telefonu</string>
     <string name="storage_permissions_denied">Aby załadować wybrany obraz, potrzebne są uprawnienia do czytania pamięci.</string>
     <string name="title_activity_driver_map">Mapa</string>
+    <string name="phone_number_colon">Numer telefonu:</string>
+    <string name="phone_number_error">Błędny numer telefonu.</string>
+    <string name="profile">Profil</string>
+    <string name="sth_wrong_error">Coś poszło nie tak, spróbuj ponownie.</string>
+    <string name="user_name_colon">Imię:</string>
 </resources>
