@@ -62,13 +62,11 @@ dependencies {
 
     implementation 'com.firebase:geofire-java:3.0.0'
 
-
+    //drawer
     implementation("com.mikepenz:materialdrawer:6.0.9@aar") {
         transitive = true
     }
 
-    //Add the Firebase SDK for Google Analytics.
-//    implementation 'com.google.firebase:firebase-analytics:17.2.2'
 
     // Add the Firebase SDK for Crashlytics.
     implementation 'com.google.firebase:firebase-crashlytics:17.0.0-beta01'
@@ -86,6 +84,9 @@ dependencies {
 
     //google directions
     implementation 'com.github.jd-alexander:library:1.1.0'
+
+    //google autocomplete places
+    implementation 'com.google.android.libraries.places:places:1.0.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

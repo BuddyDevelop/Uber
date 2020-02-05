@@ -25,6 +25,7 @@ import uber.app.Activities.HistoryActivity;
 import uber.app.Activities.ProfileActivity;
 import uber.app.R;
 import uber.app.SharedPref;
+import uber.app.Util;
 
 import static uber.app.Helpers.FirebaseHelper.logoutUser;
 import static uber.app.Helpers.FirebaseHelper.mFirebaseUser;
@@ -171,6 +172,7 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
                         mMapActivity.deleteLocationFromDatabase();
 
                         isDriverToggleDrawerItem.setChecked( true );
+                        Util.showRelativeLayout( mMapActivity.relativeLayout );
                         mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, true );
 
                     } else {
@@ -182,6 +184,7 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
                         mMapActivity.addLocationToDatabase( driverLong, driverLat );
 
                         isDriverToggleDrawerItem.setChecked( false );
+                        Util.hideRelativeLayout( mMapActivity.relativeLayout );
                         mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, false );
                     }
                 }else{

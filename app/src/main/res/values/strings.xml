@@ -83,6 +83,8 @@
     <string name="sth_wrong_error">Something went wrong, try again.</string>
     <string name="phone_number_error">Wrong phone number.</string>
     <string name="profile">Profile</string>
+    <string name="user_destination_colon">Destination:</string>
+    <string name="no_specified">Not specified</string>
 
 
 </resources>

@@ -16,6 +16,7 @@ import java.util.List;
 
 import uber.app.Activities.MapActivity;
 import uber.app.R;
+import uber.app.Util;
 
 import static uber.app.Helpers.FirebaseHelper.mCustomerUberRequest;
 import static uber.app.Helpers.FirebaseHelper.mDriversDbRef;
@@ -50,13 +51,16 @@ public class DriverHelper {
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
                 if ( dataSnapshot.exists() ) {
                     setCustomerId( dataSnapshot.getValue().toString() );
+                    Util.hideRelativeLayout( mMapActivity.relativeLayout );
                     mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, false );
                     mMapActivity.leftDrawer.disableDriverToggleButtonState();
                     getAssignedCustomerPickupLocation( customerId );
                     mMapActivity.getUserInfo( customerId );
+                    mMapActivity.getCustomerDestination( customerId );
                 }
                 else {
                     mMapActivity.leftDrawer.enableDriverToggleButtonState();
+                    mMapActivity.setUserDestination( mMapActivity.getResources().getString( R.string.no_specified ) );
                     mMapActivity.hideUserInfo();
                     mMapActivity.resetDriverHelper();
                     mMapActivity.clearPolylines();
@@ -93,9 +97,11 @@ public class DriverHelper {
                                 BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ));
 
                         Location driverLocation = mMapActivity.getLastLocation();
-                        LatLng driverLatLng = new LatLng( driverLocation.getLatitude(), driverLocation.getLongitude() );
-                        //create route to customer
-                        mMapActivity.getRouteToLocation( driverLatLng, customerLatLng );
+                        if( driverLocation != null ) {
+                            LatLng driverLatLng = new LatLng( driverLocation.getLatitude(), driverLocation.getLongitude() );
+                            //create route to customer
+                            mMapActivity.getRouteToLocation( driverLatLng, customerLatLng );
+                        }
                     }
                 }
                 else {

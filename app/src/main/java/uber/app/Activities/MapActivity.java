@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +29,7 @@ import com.directions.route.Route;
 import com.directions.route.RouteException;
 import com.directions.route.Routing;
 import com.directions.route.RoutingListener;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -46,12 +48,17 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import butterknife.BindView;
@@ -73,12 +80,14 @@ import static uber.app.Helpers.FirebaseHelper.addWorkingDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.deleteAvailableDriverLocationFromDB;
 import static uber.app.Helpers.FirebaseHelper.getFromFirebase;
 import static uber.app.Helpers.FirebaseHelper.mAvailableDriversDbRef;
+import static uber.app.Helpers.FirebaseHelper.mCustomerDestinationDbRef;
 import static uber.app.Helpers.FirebaseHelper.mUser;
 import static uber.app.Helpers.FirebaseHelper.mUsersDbRef;
 import static uber.app.Helpers.FirebaseHelper.mWorkingDriversDbRef;
 import static uber.app.Helpers.FirebaseHelper.userIdString;
 import static uber.app.SharedPref.DEFAULT_DOUBLE;
 import static uber.app.Util.changeMapsMyLocationButton;
+import static uber.app.Util.showRelativeLayout;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, RoutingListener {
     private static final int REQUEST_GPS_PERMISSIONS = 1;
@@ -112,10 +121,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     TextView mUserPhoneNumber;
     @BindView( R.id.user_profile_image_map )
     ImageView mUserImage;
+    @BindView( R.id.autocomplete_relative_layout )
+    public RelativeLayout relativeLayout;
+    @BindView( R.id.user_destination_value )
+    TextView mUserDestination;
 
-    public CustomerHelper getCustomerHelper() {
-        return mCustomerHelper;
-    }
+    public CustomerHelper getCustomerHelper() { return mCustomerHelper; }
     public DriverHelper getDriverHelper() { return mDriverHelper; }
     public Location getLastLocation() { return mLastLocation; }
     public GoogleMap getGoogleMap() {
@@ -150,7 +161,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
-        setContentView( R.layout.activity_driver_map );
+        setContentView( R.layout.activity_map );
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = ( SupportMapFragment ) getSupportFragmentManager()
                 .findFragmentById( R.id.map );
@@ -190,6 +201,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
 
         updateUIOnDataReceived();
+        //google autocomplete API
+        initializeAutocompleteFragment();
     }
 
     private void updateUIOnDataReceived() {
@@ -212,7 +225,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if( userProfileImageUrl != null && !userProfileImageUrl.isEmpty() ) {
                     //profile image button id cuz anything else does not work
                     @SuppressLint( "ResourceType" )
-                    ImageView imageView = findViewById( 2131230902 );
+                    ImageView imageView = findViewById( 2131230904 );
                     if( imageView != null )
                             Glide
                                 .with( imageView.getContext() )
@@ -256,12 +269,37 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
+    private void initializeAutocompleteFragment() {
+        Places.initialize( getApplicationContext(), getString( R.string.google_api_key ) );
+        // Initialize the AutocompleteSupportFragment.
+        AutocompleteSupportFragment autocompleteFragment = ( AutocompleteSupportFragment )
+                getSupportFragmentManager().findFragmentById( R.id.autocomplete_fragment );
+
+        // Specify the types of place data to return.
+        autocompleteFragment.setPlaceFields( Arrays.asList( Place.Field.ID, Place.Field.NAME ) );
+
+        // Set up a PlaceSelectionListener to handle the response.
+        autocompleteFragment.setOnPlaceSelectedListener( new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected( Place place ) {
+                if( place.getName() != null )
+                    CustomerHelper.destination = place.getName();
+            }
+
+            @Override
+            public void onError( Status status ) {
+                Log.e( "onPlaceSelected", "An error occurred: " + status );
+            }
+        });
+    }
+
     private void initializeUberRequestBtn() {
         //if logged user is driver do not initialize button
         if ( SharedPref.getBool( "isDriver" ) && mUser != null && mUser.isDriver() )
             return;
 
         mRequestUberButton = findViewById( R.id.request_uber );
+        showRelativeLayout( relativeLayout );
         changeButtonVisibility( mRequestUberButton, true );
 
         //save customer location to db and put marker on map
@@ -542,6 +580,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } );
     }
 
+    public void setUserDestination( String destination ){
+        runOnUiThread( new Runnable() {
+            public void run() {
+                mUserDestination.setText( destination );
+            }
+        } );
+    }
+
+
     //display user info on screen
     public void getUserInfo( String foundDriverID ){
         mUsersDbRef.child( foundDriverID ).addListenerForSingleValueEvent( new ValueEventListener() {
@@ -600,7 +647,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             PolylineOptions polyOptions = new PolylineOptions();
             polyOptions.color( getResources().getColor( COLORS[ colorIndex ] ) );
-            polyOptions.width( 10 + i * 3 );
+            polyOptions.width( 20 );
             polyOptions.addAll( route.get( i ).getPoints() );
             Polyline polyline = mMap.addPolyline( polyOptions );
             polylines.add( polyline );
@@ -630,5 +677,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         for( Polyline line : polylines )
             line.remove();
         polylines.clear();
+    }
+
+    public void getCustomerDestination( String customerId ){
+        mCustomerDestinationDbRef.child( customerId ).child( "destination" ).addListenerForSingleValueEvent( new ValueEventListener() {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
+                if( dataSnapshot.exists() )
+                    mUserDestination.setText( dataSnapshot.getValue().toString() );
+                else
+                    mUserDestination.setText( getResources().getString( R.string.no_specified ) );
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError databaseError ) {
+
+            }
+        } );
     }
 }

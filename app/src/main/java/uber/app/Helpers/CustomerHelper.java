@@ -27,6 +27,7 @@ import uber.app.R;
 import static uber.app.Helpers.FirebaseHelper.addWorkingDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.deleteAvailableDriverLocationFromDB;
 import static uber.app.Helpers.FirebaseHelper.deleteWorkingDriverLocationFromDB;
+import static uber.app.Helpers.FirebaseHelper.mCustomerDestinationDbRef;
 import static uber.app.Helpers.FirebaseHelper.mCustomerUberRequest;
 import static uber.app.Helpers.FirebaseHelper.mCustomersDbRef;
 import static uber.app.Helpers.FirebaseHelper.mDriversDbRef;
@@ -43,6 +44,7 @@ public class CustomerHelper {
     private final int MAX_RADIUS_SEARCH = 10;
     private String customerId;
     private String foundDriverID;
+    public static String destination;
 
     private MapActivity mMapActivity;
     private Marker foundDriverMarker;
@@ -104,7 +106,8 @@ public class CustomerHelper {
                     customerId = FirebaseHelper.userIdString;
                     addCustomerToDb( customerId, foundDriverID );
                     addDriverToDb( customerId, foundDriverID );
-//                    swapToWorkingDriverStatus( foundDriverID );
+
+                    addCustomerDestinationToDb();
                     deleteAvailableDriverLocationFromDB( foundDriverID );
                     addWorkingDriverLocationToDB( foundDriverID, location.latitude, location.longitude );
                     //show driver on map
@@ -132,6 +135,7 @@ public class CustomerHelper {
                     mMapActivity.showMessage( mMapActivity.getResources().getString( R.string.no_driver_nearby ) );
                     removeCustomerRequestFromDb();
                     deleteCustomerFromDb( customerId );
+                    removeCustomerDestinationFromDb();
                     mMapActivity.enableUberRequestBtn();
                     mMapActivity.clearMap();
                     mMapActivity.resetCustomerHelper();
@@ -171,7 +175,8 @@ public class CustomerHelper {
                                 @Override
                                 public void run() {
                                     mMapActivity.mRequestUberButton.setEnabled( false );
-                                      mMapActivity.getUserInfo( foundDriverID );
+                                    mMapActivity.getUserInfo( foundDriverID );
+                                    mMapActivity.getCustomerDestination( customerId );
                                 }
                             } );
 
@@ -198,6 +203,7 @@ public class CustomerHelper {
                         }
                     }
                 } else {
+                    mMapActivity.setUserDestination( mMapActivity.getResources().getString( R.string.no_specified ) );
                     mMapActivity.hideUserInfo();
                     mMapActivity.resetCustomerHelper();
                     mMapActivity.clearMap();
@@ -262,6 +268,7 @@ public class CustomerHelper {
                     mMapActivity.enableUberRequestBtn();
                     mMapActivity.clearMap();
                     mMapActivity.resetCustomerHelper();
+                    mMapActivity.setUserDestination( mMapActivity.getResources().getString( R.string.no_specified ) );
                     mMapActivity.hideUserInfo();
                 }
             }
@@ -325,5 +332,17 @@ public class CustomerHelper {
     private void removeFoundDriverMarker() {
         if ( foundDriverMarker != null && mMapActivity.getGoogleMap() != null )
             foundDriverMarker.remove();
+    }
+
+    private void addCustomerDestinationToDb(){
+        if( destination != null && !destination.isEmpty() ){
+            HashMap map = new HashMap<>(  );
+            map.put( "destination", destination );
+            mCustomerDestinationDbRef.child( customerId ).updateChildren( map );
+        }
+    }
+
+    private void removeCustomerDestinationFromDb(){
+        mCustomerDestinationDbRef.child( customerId ).removeValue();
     }
 }

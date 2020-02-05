@@ -29,6 +29,16 @@ public class Util {
         mRequestUberButton.setLayoutParams( layoutParams );
     }
 
+    public static void hideRelativeLayout( RelativeLayout relativeLayout ){
+        if( relativeLayout != null )
+            relativeLayout.setVisibility( View.INVISIBLE );
+    }
+
+    public static void showRelativeLayout( RelativeLayout relativeLayout ){
+        if( relativeLayout != null )
+            relativeLayout.setVisibility( View.VISIBLE );
+    }
+
     public static void setLayoutToFullscreen( Window window ){
         //make status bar transparent so map is also visible in status bar
         if ( Build.VERSION.SDK_INT == Build.VERSION_CODES.KITKAT ) {
@@ -56,8 +66,7 @@ public class Util {
     }
 
     public static void changeMapsMyLocationButton( Context context, SupportMapFragment mapFragment ) {
-        int dp50ToPixels = Math.round( 50 * ( context.getResources().getDisplayMetrics().xdpi / DisplayMetrics.DENSITY_DEFAULT ) );
-        int actionBarSize;
+        int dp30ToPixels = Math.round( 30 * ( context.getResources().getDisplayMetrics().xdpi / DisplayMetrics.DENSITY_DEFAULT ) );
 
         //get reference to my location icon
         View locationButton = ( ( View ) mapFragment.getView().findViewById( Integer.parseInt( "1" ) ).
@@ -67,18 +76,11 @@ public class Util {
             return;
 
 
-        // and next place it on bottom right
+        // and next place it at top with some margin
         RelativeLayout.LayoutParams rlp = ( RelativeLayout.LayoutParams ) locationButton.getLayoutParams();
-        // position on right bottom
         rlp.addRule( RelativeLayout.ALIGN_PARENT_TOP, 0 );
-        rlp.addRule( RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE );
-
-        //get action bar size for margin bottom value
-        TypedValue typedValue = new TypedValue();
-        context.getTheme().resolveAttribute( android.R.attr.actionBarSize, typedValue, true );
-        actionBarSize = TypedValue.complexToDimensionPixelSize( typedValue.data, context.getResources().getDisplayMetrics() );
 
         //add margin to button with pixels
-        rlp.setMargins( 0, 0, dp50ToPixels, actionBarSize );
+        rlp.setMargins( 0, dp30ToPixels, 0, 0 );
     }
 }

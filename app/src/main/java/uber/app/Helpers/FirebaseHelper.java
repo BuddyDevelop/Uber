@@ -40,6 +40,7 @@ public class FirebaseHelper {
     public static final DatabaseReference mAvailableDriversDbRef = FirebaseDatabase.getInstance().getReference( "driversAvailable" );
     public static final DatabaseReference mWorkingDriversDbRef = FirebaseDatabase.getInstance().getReference( "driversWorking" );
     public static final DatabaseReference mCustomerUberRequest = FirebaseDatabase.getInstance().getReference( "customerRequest" );
+    public static final DatabaseReference mCustomerDestinationDbRef = FirebaseDatabase.getInstance().getReference( "customerDestination" );
 
     public static final GeoFire mGeoFireWorkingDrivers = new GeoFire( mWorkingDriversDbRef );
     public static final GeoFire mGeoFireAvailableDrivers = new GeoFire( mAvailableDriversDbRef );
