@@ -32,12 +32,8 @@ public class DriverHelper {
     public DriverHelper( MapActivity mMapActivity ) {
         this.mMapActivity = mMapActivity;
     }
-    public String getCustomerId() {
-        return customerId;
-    }
-    public void setCustomerId( String customerId ) {
-        this.customerId = customerId;
-    }
+    public String getCustomerId() { return customerId; }
+    public void setCustomerId( String customerId ) { this.customerId = customerId; }
 
     public void getAssignedCustomer() {
         //if user is not a driver
@@ -51,19 +47,17 @@ public class DriverHelper {
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
                 if ( dataSnapshot.exists() ) {
                     setCustomerId( dataSnapshot.getValue().toString() );
+
                     Util.hideRelativeLayout( mMapActivity.relativeLayout );
-                    mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, false );
+                    Util.changeButtonVisibility( mMapActivity.mPickupCustomerBtn, true );
                     mMapActivity.leftDrawer.disableDriverToggleButtonState();
                     getAssignedCustomerPickupLocation( customerId );
                     mMapActivity.getUserInfo( customerId );
                     mMapActivity.getCustomerDestination( customerId );
                 }
                 else {
-                    mMapActivity.leftDrawer.enableDriverToggleButtonState();
-                    mMapActivity.setUserDestination( mMapActivity.getResources().getString( R.string.no_specified ) );
-                    mMapActivity.hideUserInfo();
+                    Util.changeButtonVisibility( mMapActivity.mPickupCustomerBtn, false );
                     mMapActivity.resetDriverHelper();
-                    mMapActivity.clearPolylines();
                 }
             }
 
@@ -82,22 +76,16 @@ public class DriverHelper {
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
                 if ( dataSnapshot.exists() ) {
                     List<Object> customerLocation = ( List<Object> ) dataSnapshot.getValue();
-                    double customerLat;
-                    double customerLng;
+                    LatLng customerLatLng = Util.getLatLng( customerLocation );
 
-                    //check if customer latitude and longitude in firebase is not null
-                    if ( customerLocation.get( 0 ) != null && customerLocation.get( 1 ) != null ) {
-                        customerLat = Double.parseDouble( customerLocation.get( 0 ).toString() );
-                        customerLng = Double.parseDouble( customerLocation.get( 1 ).toString() );
-                        LatLng customerLatLng = new LatLng( customerLat, customerLng );
+                    if( customerLatLng != null ) {
                         String customerLocationMarker = mMapActivity.getResources().getString( R.string.customer_pickup );
-
                         //add customer's location marker
                         mMapActivity.addMarkerWithTitleAndIcon( customerLatLng, customerLocationMarker,
-                                BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ));
+                                BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ) );
 
                         Location driverLocation = mMapActivity.getLastLocation();
-                        if( driverLocation != null ) {
+                        if ( driverLocation != null ) {
                             LatLng driverLatLng = new LatLng( driverLocation.getLatitude(), driverLocation.getLongitude() );
                             //create route to customer
                             mMapActivity.getRouteToLocation( driverLatLng, customerLatLng );

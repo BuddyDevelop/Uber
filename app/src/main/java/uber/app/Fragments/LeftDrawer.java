@@ -173,8 +173,6 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
 
                         isDriverToggleDrawerItem.setChecked( true );
                         Util.showRelativeLayout( mMapActivity.relativeLayout );
-                        mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, true );
-
                     } else {
                         SharedPref.setBool( "isDriver", true );
 
@@ -185,11 +183,10 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
 
                         isDriverToggleDrawerItem.setChecked( false );
                         Util.hideRelativeLayout( mMapActivity.relativeLayout );
-                        mMapActivity.changeButtonVisibility( mMapActivity.mRequestUberButton, false );
                     }
                 }else{
                     isDriverToggleDrawerItem.setChecked( false );
-                    isDriverToggleDrawerItem.setToggleEnabled( false );
+                    mDrawer.updateItem( isDriverToggleDrawerItem );
                     mMapActivity.showMessage( mMapActivity.getResources().getString( R.string.cannot_switch_to_customer ) );
                 }
                 break;
@@ -200,31 +197,22 @@ public class LeftDrawer implements Drawer.OnDrawerItemClickListener {
 
     public void disableDriverToggleButtonState() {
         SharedPref.setBool( "isDriver", true );
-        new Handler( Looper.getMainLooper() ).post( new Runnable() {
-            @Override
-            public void run() {
-                isDriverToggleDrawerItem.setChecked( false );
-            }
+        new Handler( Looper.getMainLooper() ).post( () -> {
+            isDriverToggleDrawerItem.setChecked( false );
+            mDrawer.updateItem( isDriverToggleDrawerItem );
         } );
     }
 
     public void enableDriverToggleButtonState() {
-        SharedPref.setBool( "isDriver", false ); //false
-        new Handler( Looper.getMainLooper() ).post( new Runnable() {
-            @Override
-            public void run() {
-                isDriverToggleDrawerItem.setChecked( true );
-            }
+        SharedPref.setBool( "isDriver", false );
+        new Handler( Looper.getMainLooper() ).post( () -> {
+            isDriverToggleDrawerItem.setChecked( true );
+            mDrawer.updateItem( isDriverToggleDrawerItem );
         } );
     }
 
     public void removeDriverToggle() {
-        new Handler( Looper.getMainLooper() ).post( new Runnable() {
-            @Override
-            public void run() {
-                mDrawer.removeItem( ISDRIVER );
-            }
-        } );
+        new Handler( Looper.getMainLooper() ).post( () -> mDrawer.removeItem( ISDRIVER ) );
     }
 
     public void addItem( IDrawerItem drawerItem ) {

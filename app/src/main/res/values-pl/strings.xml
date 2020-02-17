@@ -70,4 +70,9 @@
     <string name="profile">Profil</string>
     <string name="sth_wrong_error">Coś poszło nie tak, spróbuj ponownie.</string>
     <string name="user_name_colon">Imię:</string>
+    <string name="customer_destination">Cel klienta</string>
+    <string name="finish_ride">Zakończ jazdę</string>
+    <string name="no_specified">Nie określono</string>
+    <string name="pick_customer">Odbierz klienta</string>
+    <string name="user_destination_colon">Dokąd:</string>
 </resources>

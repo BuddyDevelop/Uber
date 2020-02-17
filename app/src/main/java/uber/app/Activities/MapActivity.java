@@ -46,8 +46,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
@@ -63,13 +61,13 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import uber.app.Helpers.CheckNetwork;
 import uber.app.Helpers.CustomerHelper;
 import uber.app.Helpers.DriverHelper;
 import uber.app.Helpers.FirebaseHelper;
 import uber.app.Fragments.LeftDrawer;
 import uber.app.Models.User;
-import uber.app.OnDataReceiveCallback;
 import uber.app.R;
 import uber.app.SharedPref;
 import uber.app.Util;
@@ -78,12 +76,18 @@ import static uber.app.Helpers.FirebaseHelper.addAvailableDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.addCustomerLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.addWorkingDriverLocationToDB;
 import static uber.app.Helpers.FirebaseHelper.deleteAvailableDriverLocationFromDB;
+import static uber.app.Helpers.FirebaseHelper.deleteCustomerFromDb;
+import static uber.app.Helpers.FirebaseHelper.deleteCustomerRequestFromDB;
+import static uber.app.Helpers.FirebaseHelper.deleteDriverFromDb;
+import static uber.app.Helpers.FirebaseHelper.deleteWorkingDriverLocationFromDB;
 import static uber.app.Helpers.FirebaseHelper.getFromFirebase;
 import static uber.app.Helpers.FirebaseHelper.mAvailableDriversDbRef;
 import static uber.app.Helpers.FirebaseHelper.mCustomerDestinationDbRef;
+import static uber.app.Helpers.FirebaseHelper.mDriversDbRef;
 import static uber.app.Helpers.FirebaseHelper.mUser;
 import static uber.app.Helpers.FirebaseHelper.mUsersDbRef;
 import static uber.app.Helpers.FirebaseHelper.mWorkingDriversDbRef;
+import static uber.app.Helpers.FirebaseHelper.removeCustomerDestinationFromDb;
 import static uber.app.Helpers.FirebaseHelper.userIdString;
 import static uber.app.SharedPref.DEFAULT_DOUBLE;
 import static uber.app.Util.changeMapsMyLocationButton;
@@ -91,12 +95,15 @@ import static uber.app.Util.showRelativeLayout;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, RoutingListener {
     private static final int REQUEST_GPS_PERMISSIONS = 1;
-    private static final float MINIMUM_DISTANCE_BETWEEN_MAP_UPDATES = 70;
+    private static final float MINIMUM_DISTANCE_BETWEEN_MAP_UPDATES = 10;
     private static final long MINIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 20 * 1000; //20 sec
     private static final long MAXIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 30 * 1000; //30 sec
     private static final float MAP_ZOOM = 16;
 
     private FusedLocationProviderClient mFusedLocationProviderClient;
+    public LocationRequest mLocationRequest;
+    public Location mLastLocation;
+
     private CustomerHelper mCustomerHelper;
     private DriverHelper mDriverHelper;
     public LeftDrawer leftDrawer;
@@ -104,15 +111,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private Marker locationMarker;
 
-    public LocationRequest mLocationRequest;
-    public Location mLastLocation;
-
-    public Toolbar mToolbar;
-    public MaterialButton mRequestUberButton;
-
     private List< Polyline > polylines;
-    private static final int[] COLORS = new int[]{ R.color.primary_dark, R.color.primary_dark_material_light };
+    private static final int[] COLORS = new int[]{ R.color.primary_dark, R.color.md_amber_50 };
 
+    @BindView( R.id.request_uber )
+    public MaterialButton mRequestUberButton;
+    @BindView( R.id.toolbar )
+    public Toolbar mToolbar;
     @BindView( R.id.info )
     LinearLayout mInfo;
     @BindView( R.id.user_name_value )
@@ -125,6 +130,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public RelativeLayout relativeLayout;
     @BindView( R.id.user_destination_value )
     TextView mUserDestination;
+    @BindView( R.id.pickup_customer_btn )
+    public MaterialButton mPickupCustomerBtn;
 
     public CustomerHelper getCustomerHelper() { return mCustomerHelper; }
     public DriverHelper getDriverHelper() { return mDriverHelper; }
@@ -148,15 +155,42 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     mMap.moveCamera( CameraUpdateFactory.newLatLngZoom( latLng, MAP_ZOOM ) );
 
                     //update working driver or available driver
-                    if( mUser != null && mUser.isDriver() && mDriverHelper != null && mDriverHelper.getCustomerId() != null ){
+                    if( mUser != null && mUser.isDriver() && mDriverHelper != null && mDriverHelper.getCustomerId() != null )
                         addWorkingDriverLocationToDB( userIdString, latLng.latitude, latLng.longitude );
-                    } else if( mUser != null && mUser.isDriver() && SharedPref.getBool( "isDriver" ) ){ //if driver is not a customer
+                    else if( mUser != null && mUser.isDriver() && SharedPref.getBool( "isDriver" ) ) //if driver is not a customer
                         addAvailableDriverLocationToDB( userIdString, latLng.latitude, latLng.longitude );
-                    }
+
                 }
             }
         }
     };
+
+    private void listenForCustomerRequest(){
+        mWorkingDriversDbRef.child( userIdString ).addValueEventListener( new ValueEventListener() {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
+                if( dataSnapshot.exists() ){
+
+                    mDriversDbRef.child( userIdString ).child( "customerId" ).addListenerForSingleValueEvent( new ValueEventListener() {
+                        @Override
+                        public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
+                            if( dataSnapshot.exists() ) {
+                                if ( mDriverHelper == null )
+                                    mDriverHelper = new DriverHelper( MapActivity.this );
+                                mDriverHelper.setCustomerId( dataSnapshot.getValue().toString() );
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled( @NonNull DatabaseError databaseError ) { }
+                    } );
+                }
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError databaseError ) { }
+        } );
+    }
 
     @Override
     protected void onCreate( Bundle savedInstanceState ) {
@@ -166,6 +200,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = ( SupportMapFragment ) getSupportFragmentManager()
                 .findFragmentById( R.id.map );
         mapFragment.getMapAsync( this );
+
+        //initialize shared pref if there was no instance before
+        SharedPref.initialize( getApplicationContext() );
 
         polylines = new ArrayList<>( );
 
@@ -188,12 +225,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         //set customer or driver
         if ( mUser != null && mUser.isDriver() ) {
             mDriverHelper = new DriverHelper( this );
-
             //get driver's customer if any
             mDriverHelper.getAssignedCustomer();
         } else {
             mCustomerHelper = new CustomerHelper( this );
-
             //if user is not a driver create button to request for a ride
             initializeUberRequestBtn();
             if ( userIdString != null && !userIdString.isEmpty() )
@@ -206,32 +241,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void updateUIOnDataReceived() {
-        //do actions on data received
-        getFromFirebase( new OnDataReceiveCallback() {
-            public void onDataReceived() {
-                if ( mUser != null && mUser.isDriver() ) {
+        getFromFirebase( () -> {
+            if ( mUser != null && mUser.isDriver() ) {
 
-                    if( mDriverHelper == null )
-                        mDriverHelper = new DriverHelper( MapActivity.this );
+                if( mDriverHelper == null )
+                    mDriverHelper = new DriverHelper( MapActivity.this );
 
-                    //get driver's customer if any
-                    mDriverHelper.getAssignedCustomer();
-                } else{
-                    leftDrawer.removeDriverToggle();
-                }
+                //get driver's customer if any
+                mDriverHelper.getAssignedCustomer();
+                listenForCustomerRequest();
+            } else{
+                leftDrawer.removeDriverToggle();
+            }
 
-                //load user's profile image
-                String userProfileImageUrl = mUser.getProfileImageUrl();
-                if( userProfileImageUrl != null && !userProfileImageUrl.isEmpty() ) {
-                    //profile image button id cuz anything else does not work
-                    @SuppressLint( "ResourceType" )
-                    ImageView imageView = findViewById( 2131230904 );
-                    if( imageView != null )
-                            Glide
-                                .with( imageView.getContext() )
-                                .load( userProfileImageUrl )
-                                .into( imageView );
-                }
+            //load user's profile image
+            String userProfileImageUrl = mUser.getProfileImageUrl();
+            if( userProfileImageUrl != null && !userProfileImageUrl.isEmpty() ) {
+                //profile image button id cuz anything else does not work
+                @SuppressLint( "ResourceType" )
+                ImageView imageView = findViewById( 2131230904 );
+                if( imageView != null )
+                        Glide
+                            .with( imageView.getContext() )
+                            .load( userProfileImageUrl )
+                            .into( imageView );
             }
         } );
     }
@@ -242,12 +275,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if ( mLastLocation != null ) {
             addLocationToDatabase( mLastLocation.getLatitude(), mLastLocation.getLongitude() );
         }
+        //refresh location callback
+        if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M )
+            if ( ContextCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED )
+                mFusedLocationProviderClient.requestLocationUpdates( mLocationRequest, mLocationCallback, Looper.myLooper() );
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         deleteLocationFromDatabase();
+        //remove location callback
+        mFusedLocationProviderClient.removeLocationUpdates( mLocationCallback );
     }
 
     @Override
@@ -270,20 +309,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void initializeAutocompleteFragment() {
+        //initialize places API
         Places.initialize( getApplicationContext(), getString( R.string.google_api_key ) );
+
         // Initialize the AutocompleteSupportFragment.
         AutocompleteSupportFragment autocompleteFragment = ( AutocompleteSupportFragment )
                 getSupportFragmentManager().findFragmentById( R.id.autocomplete_fragment );
 
         // Specify the types of place data to return.
-        autocompleteFragment.setPlaceFields( Arrays.asList( Place.Field.ID, Place.Field.NAME ) );
+        autocompleteFragment.setPlaceFields( Arrays.asList( Place.Field.NAME, Place.Field.LAT_LNG ) );
 
         // Set up a PlaceSelectionListener to handle the response.
         autocompleteFragment.setOnPlaceSelectedListener( new PlaceSelectionListener() {
             @Override
-            public void onPlaceSelected( Place place ) {
-                if( place.getName() != null )
+            public void onPlaceSelected( @NonNull Place place ) {
+                if( place.getName() != null ) {
                     CustomerHelper.destination = place.getName();
+                    CustomerHelper.destinationLatLng = place.getLatLng();
+                }
             }
 
             @Override
@@ -294,73 +337,59 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void initializeUberRequestBtn() {
-        //if logged user is driver do not initialize button
-        if ( SharedPref.getBool( "isDriver" ) && mUser != null && mUser.isDriver() )
-            return;
-
-        mRequestUberButton = findViewById( R.id.request_uber );
         showRelativeLayout( relativeLayout );
-        changeButtonVisibility( mRequestUberButton, true );
 
         //save customer location to db and put marker on map
         setUberRequestOnClickListener();
     }
 
     private void setUberRequestOnClickListener() {
-        mRequestUberButton.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick( View v ) {
-                //no last location available
-                if ( mLastLocation == null ) {
-                    Toast.makeText( MapActivity.this, R.string.no_location_err, Toast.LENGTH_SHORT ).show();
-                    return;
-                }
-
-                //no internet connection
-                if ( !CheckNetwork.isInternetAvailable( MapActivity.this ) ) {
-                    Toast.makeText( MapActivity.this, R.string.no_network_err, Toast.LENGTH_SHORT ).show();
-                    return;
-                }
-
-                //customer id is assigned so customer already has requested for uber
-                if ( mCustomerHelper != null && mCustomerHelper.getCustomerId() != null && !mCustomerHelper.getCustomerId().isEmpty() )
-                    return;
-
-                final String pickupMarkerTitle = getResources().getString( R.string.pickup_marker_title );
-                final double pickupLat = mLastLocation.getLatitude();
-                final double pickupLong = mLastLocation.getLongitude();
-                final LatLng pickupLatLng = new LatLng( pickupLat, pickupLong );
-
-                //save customer pickup location
-                SharedPref.setDouble( "pickupLat", pickupLat );
-                SharedPref.setDouble( "pickupLong", pickupLong );
-
-                //save customer location
-                addCustomerLocationToDB( pickupLat, pickupLong );
-                //put marker on map
-                locationMarker = addMarkerWithTitleAndIcon( pickupLatLng, pickupMarkerTitle,
-                        BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ) );
-
-                //disable button
-                disableUberRequestBtn();
-
-                if ( mCustomerHelper == null )
-                    mCustomerHelper = new CustomerHelper( MapActivity.this );
-                mCustomerHelper.setCustomerId( userIdString );
-                mCustomerHelper.getClosestDriverInRadius( pickupLat, pickupLong );
+        mRequestUberButton.setOnClickListener( v -> {
+            //no last location available
+            if ( mLastLocation == null ) {
+                Toast.makeText( MapActivity.this, R.string.no_location_err, Toast.LENGTH_SHORT ).show();
+                return;
             }
+
+            //no internet connection
+            if ( !CheckNetwork.isInternetAvailable( MapActivity.this ) ) {
+                Toast.makeText( MapActivity.this, R.string.no_network_err, Toast.LENGTH_SHORT ).show();
+                return;
+            }
+
+            //customer id is assigned so customer already has requested for uber
+            if ( mCustomerHelper != null && mCustomerHelper.getCustomerId() != null && !mCustomerHelper.getCustomerId().isEmpty() )
+                return;
+
+            final String pickupMarkerTitle = getResources().getString( R.string.pickup_marker_title );
+            final double pickupLat = mLastLocation.getLatitude();
+            final double pickupLong = mLastLocation.getLongitude();
+            final LatLng pickupLatLng = new LatLng( pickupLat, pickupLong );
+
+            //save customer pickup location
+            SharedPref.setDouble( "pickupLat", pickupLat );
+            SharedPref.setDouble( "pickupLong", pickupLong );
+
+            //save customer location
+            addCustomerLocationToDB( pickupLat, pickupLong );
+            //put marker on map
+            locationMarker = addMarkerWithTitleAndIcon( pickupLatLng, pickupMarkerTitle,
+                    BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ) );
+
+            //disable button
+            disableUberRequestBtn();
+
+            if ( mCustomerHelper == null )
+                mCustomerHelper = new CustomerHelper( MapActivity.this );
+            mCustomerHelper.setCustomerId( userIdString );
+            mCustomerHelper.getClosestDriverInRadius( pickupLat, pickupLong );
         } );
     }
 
     public void enableUberRequestBtn() {
         mRequestUberButton.setText( R.string.request_uber );
 
-        mRequestUberButton.postDelayed( new Runnable() {
-            @Override
-            public void run() {
-                mRequestUberButton.setEnabled( true );
-            }
-        }, 3000 );
+        mRequestUberButton.postDelayed( () -> mRequestUberButton.setEnabled( true ), 3000 );
 
 
         SharedPref.setBool( "buttonDisabled", false );
@@ -421,8 +450,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void setToolbar() {
-        mToolbar = findViewById( R.id.toolbar );
-
         mToolbar.setBackgroundColor( Color.TRANSPARENT );
         setSupportActionBar( mToolbar );
         getSupportActionBar().setDisplayHomeAsUpEnabled( true );
@@ -480,34 +507,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @SuppressWarnings( "MissingPermission" )
     private void getLastKnownLocation() {
         mFusedLocationProviderClient.getLastLocation()
-                .addOnCompleteListener( this, new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete( @NonNull Task<Location> task ) {
-                        if ( task.isSuccessful() && task.getResult() != null ) {
-                            mLastLocation = task.getResult();
-                            LatLng latLng = new LatLng( mLastLocation.getLatitude(), mLastLocation.getLongitude() );
+                .addOnCompleteListener( this, task -> {
+                    if ( task.isSuccessful() && task.getResult() != null ) {
+                        mLastLocation = task.getResult();
+                        LatLng latLng = new LatLng( mLastLocation.getLatitude(), mLastLocation.getLongitude() );
 
-                            mMap.moveCamera( CameraUpdateFactory.newLatLngZoom( latLng, MAP_ZOOM ) );
-                            mMap.animateCamera( CameraUpdateFactory.zoomTo( MAP_ZOOM ), 2000, null );
-                        }
+                        mMap.moveCamera( CameraUpdateFactory.newLatLngZoom( latLng, MAP_ZOOM ) );
+                        mMap.animateCamera( CameraUpdateFactory.zoomTo( MAP_ZOOM ), 2000, null );
                     }
                 } );
     }
 
     public void showMessage( final String s ) {
-        runOnUiThread( new Runnable() {
-            public void run() {
-                Toast.makeText( MapActivity.this, s, Toast.LENGTH_LONG ).show();
-            }
-        } );
+        runOnUiThread( () -> Toast.makeText( MapActivity.this, s, Toast.LENGTH_LONG ).show() );
     }
 
     public void clearMap() {
-        runOnUiThread( new Runnable() {
-            public void run() {
-                if ( getGoogleMap() != null )
-                    mMap.clear();
-            }
+        runOnUiThread( () -> {
+            if ( getGoogleMap() != null )
+                mMap.clear();
         } );
     }
 
@@ -520,29 +538,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     public void changeRequestBtnText( final int stringResourceId ) {
-        runOnUiThread( new Runnable() {
-            public void run() {
-                mRequestUberButton.setText( stringResourceId );
-            }
-        } );
-    }
-
-    public void changeButtonVisibility( MaterialButton mRequestUberButton, boolean makeVisible ) {
-        if( mRequestUberButton == null )
-            return;
-
-        if ( makeVisible )
-            Util.showButton( mRequestUberButton );
-        else
-            Util.hideButton( mRequestUberButton );
+        runOnUiThread( () -> mRequestUberButton.setText( stringResourceId ) );
     }
 
     public void resetCustomerHelper() {
+        setUserDestination( getResources().getString( R.string.no_specified ) );
+        hideUserInfo();
+        clearMap();
+        enableUberRequestBtn();
         mCustomerHelper = null;
     }
 
     public void resetDriverHelper(){
-        mDriverHelper.setCustomerId( null );
+        leftDrawer.enableDriverToggleButtonState();
+        setUserDestination( getResources().getString( R.string.no_specified ) );
+        hideUserInfo();
+        Util.showRelativeLayout( relativeLayout );
+        clearMap();
         mDriverHelper = null;
     }
 
@@ -555,39 +567,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     public void setUserName( String name ){
-        runOnUiThread( new Runnable() {
-            @Override
-            public void run() {
-                mUserName.setText( name );
-            }
-        } );
+        runOnUiThread( () -> mUserName.setText( name ) );
     }
 
     public void setUserPhone( String phone ){
-        runOnUiThread( new Runnable() {
-            public void run() {
-                mUserPhoneNumber.setText( phone );
-            }
-        } );
+        runOnUiThread( () -> mUserPhoneNumber.setText( phone ) );
     }
 
     public void setUserImage( String userImage ){
-        runOnUiThread( new Runnable() {
-            @Override
-            public void run() {
-                Glide.with( getApplicationContext() ).load( userImage ).into( mUserImage );
-            }
-        } );
+        runOnUiThread( () -> Glide.with( getApplicationContext() ).load( userImage ).into( mUserImage ) );
     }
 
     public void setUserDestination( String destination ){
-        runOnUiThread( new Runnable() {
-            public void run() {
-                mUserDestination.setText( destination );
-            }
-        } );
+        runOnUiThread( () -> mUserDestination.setText( destination ) );
     }
-
 
     //display user info on screen
     public void getUserInfo( String foundDriverID ){
@@ -613,11 +606,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } );
     }
 
+    /*
+        Route drawing
+     */
     @Override
     public void onRoutingFailure( RouteException e ) {
         if( e != null ){
             Toast.makeText( this, "Error: " + e.getMessage(), Toast.LENGTH_LONG ).show();
-            Log.e( "asd", "onRoutingFailure: " + e.getMessage()  );
         }else{
             Toast.makeText( this, R.string.sth_wrong_error, Toast.LENGTH_LONG ).show();
         }
@@ -638,24 +633,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         //add route(s) to the map.
         for ( int i = 0; i < route.size(); i++ ) {
             int colorIndex;
-            //In case of more than 5 alternative routes
-            if( i == 0 )
-                colorIndex = i;
-            else
-                colorIndex = 1;
+            colorIndex = i == 0 ? i : 1;
 
 
             PolylineOptions polyOptions = new PolylineOptions();
             polyOptions.color( getResources().getColor( COLORS[ colorIndex ] ) );
-            polyOptions.width( 20 );
+            if( i == 0 )
+                polyOptions.width( 22 );
+            else
+                polyOptions.width( 14 );
             polyOptions.addAll( route.get( i ).getPoints() );
             Polyline polyline = mMap.addPolyline( polyOptions );
-            polylines.add( polyline );
-
-            Toast.makeText( getApplicationContext(),"Route "+ ( i + 1 ) +
-                    ": distance - " + route.get( i ).getDistanceValue() +
-                    ": duration - " + route.get( i ).getDurationValue(), Toast.LENGTH_SHORT )
-                    .show();
+            this.polylines.add( polyline );
         }
     }
 
@@ -673,11 +662,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         routing.execute();
     }
 
-    public void clearPolylines(){
-        for( Polyline line : polylines )
-            line.remove();
-        polylines.clear();
-    }
+      /*
+        END Route drawing
+     */
 
     public void getCustomerDestination( String customerId ){
         mCustomerDestinationDbRef.child( customerId ).child( "destination" ).addListenerForSingleValueEvent( new ValueEventListener() {
@@ -694,5 +681,63 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             }
         } );
+    }
+
+    //on driver screen btn to pickup customer and end ride
+    @OnClick( R.id.pickup_customer_btn )
+    public void pickUpCustomer(){
+        String btnText = mPickupCustomerBtn.getText().toString();
+
+        //pick up customer
+        if( btnText.equals( getResources().getString( R.string.pick_customer ) ) ){
+            if( mDriverHelper != null ){
+                clearMap();
+
+                //if customer have destination draw route
+                String customerId = mDriverHelper.getCustomerId();
+                if( customerId != null ){
+                    mCustomerDestinationDbRef.child( customerId ).child( "l" ).addListenerForSingleValueEvent( new ValueEventListener() {
+                        @Override
+                        public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
+                            if( dataSnapshot.exists() ){
+                                List<Object> customerDestination = ( List<Object> ) dataSnapshot.getValue();
+                                LatLng customerLatLngDestination = Util.getLatLng( customerDestination );
+
+                                //create route to customers destination
+                                if( customerLatLngDestination != null && mLastLocation != null ){
+                                    getRouteToLocation( new LatLng( mLastLocation.getLatitude(), mLastLocation.getLongitude() ),
+                                            customerLatLngDestination );
+
+                                    addMarkerWithTitleAndIcon( customerLatLngDestination, getResources().getString( R.string.customer_destination ),
+                                            BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ) );
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled( @NonNull DatabaseError databaseError ) {
+                            Log.e( "err", "pickUpCustomer: " + databaseError.getMessage()  );
+                        }
+                    } );
+                }
+
+                 mPickupCustomerBtn.setText( R.string.finish_ride );
+            }
+        } else{
+            //set this button text to initial
+            mPickupCustomerBtn.setText( R.string.pick_customer );
+            Util.changeButtonVisibility( mPickupCustomerBtn, false );
+
+            if( mDriverHelper != null && mDriverHelper.getCustomerId() != null ) {
+                String customerId = mDriverHelper.getCustomerId();
+                deleteCustomerFromDb( customerId );
+                deleteCustomerRequestFromDB( customerId );
+                removeCustomerDestinationFromDb( customerId );
+            }
+
+            deleteWorkingDriverLocationFromDB( userIdString );
+            deleteDriverFromDb( userIdString );
+            resetDriverHelper();
+        }
     }
 }

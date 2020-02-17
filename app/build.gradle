@@ -42,16 +42,16 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:19.0.1'
 
     // ViewModel and LiveData
-    def lifecycle_version = "2.1.0"
-    def room_version = "2.2.1"
-
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
-    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
+//    def lifecycle_version = "2.1.0"
+//    def room_version = "2.2.1"
+//
+//    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+//    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
     // For Kotlin use kapt instead of annotationProcessor
 
     //Room
-    implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
+//    implementation "androidx.room:room-runtime:$room_version"
+//    annotationProcessor "androidx.room:room-compiler:$room_version"
     // For Kotlin use kapt instead of annotationProcessor
 
     implementation 'com.google.android.material:material:1.0.0'
@@ -86,7 +86,7 @@ dependencies {
     implementation 'com.github.jd-alexander:library:1.1.0'
 
     //google autocomplete places
-    implementation 'com.google.android.libraries.places:places:1.0.0'
+    implementation 'com.google.android.libraries.places:places:2.2.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

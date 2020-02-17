@@ -19,6 +19,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.HashMap;
+
 import uber.app.Activities.RegisterActivity;
 import uber.app.Cache;
 import uber.app.Models.User;
@@ -73,7 +75,7 @@ public class FirebaseHelper {
             @Override
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ){
                 mUser = dataSnapshot.getValue( User.class );
-//                SharedPref.setBool( "isDriver", mUser.isDriver() );
+
                 callback.onDataReceived();
             }
 
@@ -161,14 +163,46 @@ public class FirebaseHelper {
         } );
     }
 
-    public static void deleteCustomerLocationFromDB(){
-        mGeoFireCustomerUberRequest.removeLocation( userIdString, new GeoFire.CompletionListener() {
+    public static void deleteCustomerRequestFromDB( String customerId ){
+        mGeoFireCustomerUberRequest.removeLocation( customerId, new GeoFire.CompletionListener() {
             @Override
             public void onComplete( String key, DatabaseError error ) {
                 if ( error != null ) {
-                    Log.e( TAG, "deleteCustomerLocationFromDB: " + R.string.geofire_removing_err + " " + error );
+                    Log.e( TAG, "deleteCustomerRequestFromDB: " + R.string.geofire_removing_err + " " + error );
                 }
             }
         } );
+    }
+
+    public static void addCustomerToDb( String customerId, String foundDriverID ) {
+        DatabaseReference customersFirebaseDBref = mCustomersDbRef.child( customerId );
+        HashMap<String, Object> customerHashMap = new HashMap<>();
+        customerHashMap.put( "foundDriverId", foundDriverID );
+        customersFirebaseDBref.updateChildren( customerHashMap );
+    }
+
+    public static void deleteCustomerFromDb( String customerId ) {
+        if ( customerId != null && !customerId.isEmpty() ) {
+            DatabaseReference customersFirebaseDBref = mCustomersDbRef.child( customerId );
+            customersFirebaseDBref.removeValue();
+        }
+    }
+
+    public static void addDriverToDb( String customerId, String foundDriverID ) {
+        DatabaseReference driversFirebaseDBref = mDriversDbRef.child( foundDriverID );
+        HashMap<String, Object> customerHashMap = new HashMap<>();
+        customerHashMap.put( "customerId", customerId );
+        driversFirebaseDBref.updateChildren( customerHashMap );
+    }
+
+    public static void deleteDriverFromDb( String driverId ) {
+        if ( driverId != null && !driverId.isEmpty() ) {
+            DatabaseReference driversFirebaseDBref = mDriversDbRef.child( driverId );
+            driversFirebaseDBref.removeValue();
+        }
+    }
+
+    public static void removeCustomerDestinationFromDb( String customerId ){
+        mCustomerDestinationDbRef.child( customerId ).removeValue();
     }
 }

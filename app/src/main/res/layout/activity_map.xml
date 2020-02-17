@@ -48,11 +48,23 @@
                 android:layout_marginBottom="10dp"
                 android:text="@string/request_uber"
                 android:textColor="@color/ic_white_background"
-                android:visibility="invisible"
+                android:visibility="visible"
                 tools:visibility="visible" />
+
 
         </RelativeLayout>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/pickup_customer_btn"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/map"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="?attr/actionBarSize"
+            android:text="@string/pick_customer"
+            android:textColor="@color/ic_white_background"
+            android:visibility="invisible"
+            tools:visibility="visible" />
 
         <LinearLayout
             android:id="@+id/info"
