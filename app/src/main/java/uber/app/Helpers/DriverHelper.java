@@ -15,6 +15,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.List;
 
 import uber.app.Activities.MapActivity;
+import uber.app.Interfaces.IAddHistoryRecord;
 import uber.app.R;
 import uber.app.Util;
 
@@ -23,7 +24,7 @@ import static uber.app.Helpers.FirebaseHelper.mDriversDbRef;
 import static uber.app.Helpers.FirebaseHelper.mUser;
 import static uber.app.Helpers.FirebaseHelper.userIdString;
 
-public class DriverHelper {
+public class DriverHelper implements IAddHistoryRecord {
     private static final String TAG = "DriverHelper";
 
     private MapActivity mMapActivity;

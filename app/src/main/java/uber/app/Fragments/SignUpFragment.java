@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -36,6 +37,8 @@ import uber.app.CustomToast;
 import uber.app.Helpers.FirebaseHelper;
 import uber.app.Models.User;
 import uber.app.R;
+
+import static uber.app.Helpers.FirebaseHelper.mUsersDbRef;
 
 public class SignUpFragment extends Fragment implements OnClickListener {
     private View view;
@@ -185,52 +188,51 @@ public class SignUpFragment extends Fragment implements OnClickListener {
 
     private void RegisterUser( final String email, String password, final String name, final String surname, final boolean isDriver ) {
         mAuth.createUserWithEmailAndPassword( email, password )
-                .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete( @NonNull Task<AuthResult> task ) {
-                        if ( task.isSuccessful() ) {
+                .addOnCompleteListener( task -> {
+                    if ( task.isSuccessful() ) {
 
-                            user = new User(
-                                    name,
-                                    email,
-                                    surname,
-                                    isDriver
-                            );
+                        user = new User(
+                                name,
+                                email,
+                                surname,
+                                isDriver
+                        );
 
-                            //save data to database
-                            mFirebaseDatabase.getReference()
-                                    .child( "users" )
-                                    .child( FirebaseAuth.getInstance().getCurrentUser().getUid() )
-                                    .setValue( user )
-                                    .addOnCompleteListener( new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete( @NonNull Task<Void> task ) {
-                                            progressBar.setVisibility( View.GONE );
-                                            if ( task.isSuccessful() ) {
-                                                String userName = name + " " + surname;
-                                                //make user profile with name
-                                                FirebaseUser user = mAuth.getCurrentUser();
-                                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder().setDisplayName( userName ).build();
-                                                user.updateProfile( profileUpdates );
+                        //save data to database
+                        mUsersDbRef
+                                .child( FirebaseAuth.getInstance().getCurrentUser().getUid() )
+                                .setValue( user )
+                                .addOnCompleteListener( task1 -> {
+                                    progressBar.setVisibility( View.GONE );
+                                    if ( task1.isSuccessful() ) {
+                                        setUserName( name, surname );
 
-                                                //get currently registered user's data
-                                                FirebaseHelper.getUserData( getActivity() );
+                                        //get currently registered user's data
+                                        FirebaseHelper.getUserData( getActivity() );
 
-                                                Toast.makeText( getActivity(), R.string.registration_successful, Toast.LENGTH_SHORT ).show();
-                                                userAlreadyLogged( getContext() );
-                                                //get app token and put to database so user can receive notifications from FCM
-//                                                MyFirebaseMessagingService.getToken();
-                                            } else
-                                                new CustomToast().showToast( getActivity(), view,
-                                                        getString( R.string.sth_went_wrong_err ) );
-                                        }
-                                    } );
+                                        Toast.makeText( getActivity(), R.string.registration_successful, Toast.LENGTH_SHORT ).show();
+                                        userAlreadyLogged( getContext() );
+                                    } else
+                                        new CustomToast().showToast( getActivity(), view,
+                                                getString( R.string.sth_went_wrong_err ) );
+                                } );
 
-                        } else
-                            new CustomToast().showToast( getActivity(), view,
-                                    task.getException().getMessage() );
-                        progressBar.setVisibility( View.GONE );
-                    }
+                    } else
+                        new CustomToast().showToast( getActivity(), view,
+                                task.getException().getMessage() );
+                    progressBar.setVisibility( View.GONE );
                 } );
+    }
+
+    private void setUserName( @NonNull String name, @NonNull String surname ){
+        String userName = name + " " + surname;
+        //make user profile with name
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder().setDisplayName( userName ).build();
+        user.updateProfile( profileUpdates ).addOnCompleteListener( task -> {
+            if( !task.isSuccessful() && task.getException().getMessage() != null )
+                Log.e("setUserName: ", task.getException().getMessage() );
+        } );
     }
 }

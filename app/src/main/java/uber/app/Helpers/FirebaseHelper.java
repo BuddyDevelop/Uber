@@ -24,7 +24,7 @@ import java.util.HashMap;
 import uber.app.Activities.RegisterActivity;
 import uber.app.Cache;
 import uber.app.Models.User;
-import uber.app.OnDataReceiveCallback;
+import uber.app.Interfaces.OnDataReceiveCallback;
 import uber.app.R;
 import uber.app.SharedPref;
 
@@ -43,6 +43,8 @@ public class FirebaseHelper {
     public static final DatabaseReference mWorkingDriversDbRef = FirebaseDatabase.getInstance().getReference( "driversWorking" );
     public static final DatabaseReference mCustomerUberRequest = FirebaseDatabase.getInstance().getReference( "customerRequest" );
     public static final DatabaseReference mCustomerDestinationDbRef = FirebaseDatabase.getInstance().getReference( "customerDestination" );
+    public static final DatabaseReference mCustomerHistoryDbRef = FirebaseDatabase.getInstance().getReference( "history" ).child( "customerHistory" );
+    public static final DatabaseReference mDriverHistoryDbRef = FirebaseDatabase.getInstance().getReference( "history" ).child( "driverHistory" );
 
     public static final GeoFire mGeoFireWorkingDrivers = new GeoFire( mWorkingDriversDbRef );
     public static final GeoFire mGeoFireAvailableDrivers = new GeoFire( mAvailableDriversDbRef );
@@ -109,67 +111,49 @@ public class FirebaseHelper {
     }
 
     public static void addAvailableDriverLocationToDB( String userIdString, double latitude, double longitude ){
-        mGeoFireAvailableDrivers.setLocation( userIdString, new GeoLocation( latitude, longitude ), new GeoFire.CompletionListener() {
-            @Override
-            public void onComplete( String key, DatabaseError error ) {
-                if ( error != null ) {
-                    Log.e( TAG, "addAvailableDriverLocationToDatabase: " + R.string.geofire_saving_err + " " + error );
-                }
+        mGeoFireAvailableDrivers.setLocation( userIdString, new GeoLocation( latitude, longitude ), ( key, error ) -> {
+            if ( error != null ) {
+                Log.e( TAG, "addAvailableDriverLocationToDatabase: " + R.string.geofire_saving_err + " " + error );
             }
         } );
     }
 
     public static void deleteAvailableDriverLocationFromDB( String userIdString ) {
-        mGeoFireAvailableDrivers.removeLocation( userIdString, new GeoFire.CompletionListener() {
-            @Override
-            public void onComplete( String key, DatabaseError error ) {
-                if ( error != null ) {
-                    Log.e( TAG, "deleteAvailableDriverLocationFromDB: " + R.string.geofire_removing_err + " " + error );
-                }
+        mGeoFireAvailableDrivers.removeLocation( userIdString, ( key, error ) -> {
+            if ( error != null ) {
+                Log.e( TAG, "deleteAvailableDriverLocationFromDB: " + R.string.geofire_removing_err + " " + error );
             }
         } );
     }
 
     public static void addWorkingDriverLocationToDB( String userIdString, double latitude, double longitude ){
-        mGeoFireWorkingDrivers.setLocation( userIdString, new GeoLocation( latitude, longitude ), new GeoFire.CompletionListener() {
-            @Override
-            public void onComplete( String key, DatabaseError error ) {
-                if ( error != null ) {
-                    Log.e( TAG, "addWorkingDriverLocationToDatabase: " + R.string.geofire_saving_err + " " + error );
-                }
+        mGeoFireWorkingDrivers.setLocation( userIdString, new GeoLocation( latitude, longitude ), ( key, error ) -> {
+            if ( error != null ) {
+                Log.e( TAG, "addWorkingDriverLocationToDatabase: " + R.string.geofire_saving_err + " " + error );
             }
         } );
     }
 
     public static void deleteWorkingDriverLocationFromDB( String userIdString ) {
-        mGeoFireWorkingDrivers.removeLocation( userIdString, new GeoFire.CompletionListener() {
-            @Override
-            public void onComplete( String key, DatabaseError error ) {
-                if ( error != null ) {
-                    Log.e( TAG, "deleteWorkingDriverLocationFromDB: " + R.string.geofire_removing_err + " " +  error );
-                }
+        mGeoFireWorkingDrivers.removeLocation( userIdString, ( key, error ) -> {
+            if ( error != null ) {
+                Log.e( TAG, "deleteWorkingDriverLocationFromDB: " + R.string.geofire_removing_err + " " +  error );
             }
         } );
     }
 
     public static void addCustomerLocationToDB( double latitude, double longitude ){
-        mGeoFireCustomerUberRequest.setLocation( userIdString, new GeoLocation( latitude, longitude ), new GeoFire.CompletionListener() {
-            @Override
-            public void onComplete( String key, DatabaseError error ) {
-                if( error != null ){
-                    Log.e( TAG, "addCustomerLocationToDB: " + R.string.geofire_saving_err + " " +  error );
-                }
+        mGeoFireCustomerUberRequest.setLocation( userIdString, new GeoLocation( latitude, longitude ), ( key, error ) -> {
+            if( error != null ){
+                Log.e( TAG, "addCustomerLocationToDB: " + R.string.geofire_saving_err + " " +  error );
             }
         } );
     }
 
     public static void deleteCustomerRequestFromDB( String customerId ){
-        mGeoFireCustomerUberRequest.removeLocation( customerId, new GeoFire.CompletionListener() {
-            @Override
-            public void onComplete( String key, DatabaseError error ) {
-                if ( error != null ) {
-                    Log.e( TAG, "deleteCustomerRequestFromDB: " + R.string.geofire_removing_err + " " + error );
-                }
+        mGeoFireCustomerUberRequest.removeLocation( customerId, ( key, error ) -> {
+            if ( error != null ) {
+                Log.e( TAG, "deleteCustomerRequestFromDB: " + R.string.geofire_removing_err + " " + error );
             }
         } );
     }

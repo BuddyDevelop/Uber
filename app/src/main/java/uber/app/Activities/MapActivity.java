@@ -97,7 +97,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static final int REQUEST_GPS_PERMISSIONS = 1;
     private static final float MINIMUM_DISTANCE_BETWEEN_MAP_UPDATES = 10;
     private static final long MINIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 20 * 1000; //20 sec
-    private static final long MAXIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 30 * 1000; //30 sec
+    private static final long MAXIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 20 * 1000; //20 sec
     private static final float MAP_ZOOM = 16;
 
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -259,12 +259,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             if( userProfileImageUrl != null && !userProfileImageUrl.isEmpty() ) {
                 //profile image button id cuz anything else does not work
                 @SuppressLint( "ResourceType" )
-                ImageView imageView = findViewById( 2131230904 );
+                ImageView imageView = findViewById( 2131230907 );
                 if( imageView != null )
-                        Glide
-                            .with( imageView.getContext() )
-                            .load( userProfileImageUrl )
-                            .into( imageView );
+                    Glide
+                        .with( imageView.getContext() )
+                        .load( userProfileImageUrl )
+                        .into( imageView );
             }
         } );
     }
@@ -611,10 +611,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
      */
     @Override
     public void onRoutingFailure( RouteException e ) {
-        if( e != null ){
-            Toast.makeText( this, "Error: " + e.getMessage(), Toast.LENGTH_LONG ).show();
-        }else{
-            Toast.makeText( this, R.string.sth_wrong_error, Toast.LENGTH_LONG ).show();
+        if( e != null && e.getMessage() != null ){
+            Log.e( "onRoutingFailure: ", e.getMessage() );
         }
     }
 
@@ -730,6 +728,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             if( mDriverHelper != null && mDriverHelper.getCustomerId() != null ) {
                 String customerId = mDriverHelper.getCustomerId();
+                mDriverHelper.addHistoryRecord( customerId, userIdString, 0 );
                 deleteCustomerFromDb( customerId );
                 deleteCustomerRequestFromDB( customerId );
                 removeCustomerDestinationFromDb( customerId );

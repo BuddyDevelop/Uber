@@ -1,7 +1,6 @@
 package uber.app.Activities;
 
 import android.os.Bundle;
-import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +24,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate( @Nullable Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
+        setTheme( R.style.AppTheme );
         setContentView( R.layout.register_wrapper );
 
         SharedPref.initialize( getApplicationContext() );
@@ -41,14 +41,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         // On close icon click finish activity
         findViewById( R.id.close_activity ).setOnClickListener(
-                new View.OnClickListener() {
-
-                    @Override
-                    public void onClick( View arg0 ) {
-                        finish();
-
-                    }
-                } );
+                arg0 -> finish() );
 
     }
 

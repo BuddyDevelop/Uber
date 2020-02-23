@@ -1,148 +1,125 @@
 package uber.app.Activities;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.viewpager.widget.ViewPager;
+import androidx.fragment.app.FragmentPagerAdapter;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
 
+import com.google.android.material.tabs.TabLayout;
 
-import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import uber.app.Fragments.HistoryFragment;
 import uber.app.R;
+
+import static uber.app.Helpers.FirebaseHelper.mCustomerHistoryDbRef;
+import static uber.app.Helpers.FirebaseHelper.mDriverHistoryDbRef;
 
 public class HistoryActivity extends AppCompatActivity {
     private static final String TAG = "HistoryActivity";
-    private TextView name, surname, email, isDriver;
-    private ProgressBar progressBar;
-    private myAsyncTask task;
-    private Intent intent;
+
+    @BindView( R.id.toolbar_history )
+    Toolbar mToolbar;
+    @BindView( R.id.viewPager_history )
+    ViewPager mViewPager;
+    @BindView( R.id.tabs_history )
+    TabLayout mTabLayout;
 
     @Override
-    protected void onCreate( Bundle savedInstanceState ) {
+    protected void onCreate( @Nullable Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_history );
 
-        progressBar = findViewById( R.id.progressBar );
+        ButterKnife.bind( this );
 
-        task = new myAsyncTask( this );
-        task.execute( 5 );
-
-        intent = new Intent( this, BroadcastService.class );
-        intent.setAction( BroadcastService.ACTION );
-        intent.putExtra( "isWorking", true );
-
+        initToolbar();
+        initViewPager();
+        initTabLayout();
     }
 
-    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive( Context context, Intent intent ) {
-            if ( intent.getAction().equals( BroadcastService.ACTION ) ) {
-                String name = intent.getStringExtra( "name" );
-                String surname = intent.getStringExtra( "surname" );
-                TextView textView = findViewById( R.id.userName );
-                textView.setText( name );
+    private void initTabLayout() {
+        mTabLayout.setupWithViewPager( mViewPager );
+        mTabLayout.addOnTabSelectedListener( new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected( TabLayout.Tab tab ) {
+                mViewPager.setCurrentItem( tab.getPosition() );
+                switch ( tab.getPosition() ) {
+                    case 0:
 
-                TextView textView2 = findViewById( R.id.userSurname );
-                textView2.setText( surname );
-            }
-        }
-    };
+                        break;
+                    case 1:
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        startService( intent );
-        registerReceiver( broadcastReceiver, new IntentFilter( BroadcastService.ACTION ) );
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver( broadcastReceiver );
-        stopService( intent );
-        if ( task != null && task.getStatus().equals( AsyncTask.Status.RUNNING ) )
-            task.cancel( true );
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    private static class myAsyncTask extends AsyncTask<Integer, Integer, String> {
-        private WeakReference<HistoryActivity> historyActivityWeakReference;
-
-        public myAsyncTask( HistoryActivity activity ) {
-            historyActivityWeakReference = new WeakReference<HistoryActivity>( activity );
-        }
-
-        @Override
-        protected void onPreExecute() {
-
-            HistoryActivity historyActivity = historyActivityWeakReference.get();
-            if ( historyActivity == null || historyActivity.isFinishing() )
-                return;
-
-            historyActivity.progressBar.setVisibility( View.VISIBLE );
-            super.onPreExecute();
-        }
-
-
-        @Override
-        protected String doInBackground( Integer... integers ) {
-            for ( int i = 0; i <= integers[ 0 ]; i++ ) {
-                if ( isCancelled() )
-                    break;
-
-                publishProgress( ( i * 100 ) / integers[ 0 ] );
-                try {
-                    Thread.sleep( 1000 );
-                } catch ( InterruptedException e ) {
-                    e.printStackTrace();
+                        break;
                 }
             }
 
-            return "Finished!";
-        }
+            @Override
+            public void onTabUnselected( TabLayout.Tab tab ) {
+            }
 
+            @Override
+            public void onTabReselected( TabLayout.Tab tab ) {
+            }
+        } );
+    }
+
+    private void initViewPager() {
+        ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter( getSupportFragmentManager() );
+        HistoryFragment customerHistoryFragment = new HistoryFragment( mCustomerHistoryDbRef );
+        HistoryFragment driverHistoryFragment = new HistoryFragment( mDriverHistoryDbRef );
+        viewPagerAdapter.addFrag( customerHistoryFragment, "Customer" );
+        viewPagerAdapter.addFrag( driverHistoryFragment, "Driver" );
+        mViewPager.setAdapter( viewPagerAdapter );
+    }
+
+    private void initToolbar() {
+        setSupportActionBar( mToolbar );
+        if ( getSupportActionBar() != null ) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled( true );
+            getSupportActionBar().setTitle( R.string.history_menu_item );
+        }
+    }
+
+    private static class ViewPagerAdapter extends FragmentPagerAdapter {
+        private final List<Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
+
+        public ViewPagerAdapter( FragmentManager manager ) {
+            super( manager );
+        }
 
         @Override
-        protected void onProgressUpdate( Integer... values ) {
-            super.onProgressUpdate( values );
-
-            HistoryActivity historyActivity = historyActivityWeakReference.get();
-            if ( historyActivity == null || historyActivity.isFinishing() )
-                return;
-            historyActivity.progressBar.setProgress( values[ 0 ] );
+        public Fragment getItem( int position ) {
+            return mFragmentList.get( position );
         }
-
 
         @Override
-        protected void onPostExecute( String s ) {
-            super.onPostExecute( s );
-
-            HistoryActivity historyActivity = historyActivityWeakReference.get();
-            if ( historyActivity == null || historyActivity.isFinishing() )
-                return;
-
-            Toast.makeText( historyActivity, s, Toast.LENGTH_SHORT ).show();
+        public int getCount() {
+            return mFragmentList.size();
         }
 
+        public void addFrag( Fragment fragment, String title ) {
+            mFragmentList.add( fragment );
+            mFragmentTitleList.add( title );
+        }
+
+        @Override
+        public CharSequence getPageTitle( int position ) {
+            return mFragmentTitleList.get( position );
+        }
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        if ( task != null && task.getStatus().equals( AsyncTask.Status.RUNNING ) ) {
-            task.cancel( true );
-        }
+    public boolean onSupportNavigateUp() {
+        finish();
+        return super.onSupportNavigateUp();
     }
 }

@@ -1,7 +1,6 @@
 package uber.app.Activities;
 
 import android.Manifest;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -10,7 +9,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -26,8 +24,6 @@ import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.github.ybq.android.spinkit.style.Circle;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.UploadTask;
 
 import java.util.HashMap;
@@ -37,7 +33,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import uber.app.CompressImage;
 import uber.app.CustomToast;
-import uber.app.OnDataReceiveCallback;
 import uber.app.R;
 
 import static uber.app.Helpers.FirebaseHelper.getFromFirebase;
@@ -76,8 +71,10 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView( R.layout.activity_profile );
 
         ButterKnife.bind( this );
-        getSupportActionBar().setTitle( R.string.profile );
-        getSupportActionBar().setDisplayHomeAsUpEnabled( true );
+        if( getSupportActionBar() != null ) {
+            getSupportActionBar().setTitle( R.string.profile );
+            getSupportActionBar().setDisplayHomeAsUpEnabled( true );
+        }
 
         initCircles();
         loadUserData();
@@ -132,43 +129,37 @@ public class ProfileActivity extends AppCompatActivity {
 
     //load user data and fill fields
     private void loadUserData() {
-        getFromFirebase( new OnDataReceiveCallback() {
-            @Override
-            public void onDataReceived() {
-                if ( !ProfileActivity.this.isFinishing() ) {
+        getFromFirebase( () -> {
+            if ( !ProfileActivity.this.isFinishing() ) {
 
-                    userName.setText( mUser.getName() );
-                    userSurname.setText( mUser.getSurname() );
-                    userEmail.setText( mUser.getEmail() );
+                userName.setText( mUser.getName() );
+                userSurname.setText( mUser.getSurname() );
+                userEmail.setText( mUser.getEmail() );
 
-                    mCircleUserName.stop();
-                    mCircleUserSurname.stop();
-                    mCircleUserEmail.stop();
-                    mCircleUserPhone.stop();
+                mCircleUserName.stop();
+                mCircleUserSurname.stop();
+                mCircleUserEmail.stop();
+                mCircleUserPhone.stop();
 
-                    mProfileImageUrl = mUser.getProfileImageUrl();
-                    if ( mProfileImageUrl != null && !mProfileImageUrl.isEmpty() )
-                        Glide.with( getApplication() ).load( mProfileImageUrl ).into( userProfileImage );
+                mProfileImageUrl = mUser.getProfileImageUrl();
+                if ( mProfileImageUrl != null && !mProfileImageUrl.isEmpty() )
+                    Glide.with( getApplication() ).load( mProfileImageUrl ).into( userProfileImage );
 
-                    String phoneNumber = mUser.getPhoneNumber();
-                    if( phoneNumber != null && !phoneNumber.isEmpty() )
-                        userPhoneNumber.setText( phoneNumber );
-                }
+                String phoneNumber = mUser.getPhoneNumber();
+                if( phoneNumber != null && !phoneNumber.isEmpty() )
+                    userPhoneNumber.setText( phoneNumber );
             }
         } );
     }
 
     //open gallery to pick photo
     private void onProfileImageClick() {
-        userProfileImage.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick( View v ) {
-                //if user already gave storage permissions
-                if( checkReadStoragePermissions() ){
-                    Intent openGalleryIntent = new Intent( Intent.ACTION_PICK );
-                    openGalleryIntent.setType( "image/*" );
-                    startActivityForResult( openGalleryIntent, INTENT_PICKUP_PROFILE_PHOTO );
-                }
+        userProfileImage.setOnClickListener( v -> {
+            //if user already gave storage permissions
+            if( checkReadStoragePermissions() ){
+                Intent openGalleryIntent = new Intent( Intent.ACTION_PICK );
+                openGalleryIntent.setType( "image/*" );
+                startActivityForResult( openGalleryIntent, INTENT_PICKUP_PROFILE_PHOTO );
             }
         } );
     }
@@ -207,28 +198,19 @@ public class ProfileActivity extends AppCompatActivity {
             UploadTask uploadTask = mProfileImageStorageRef.child( userIdString )
                     .putBytes( CompressImage.compressImage( this, imageUri ).toByteArray() );
 
-            uploadTask.addOnSuccessListener( new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                //upload on storage was successfull
-                @Override
-                public void onSuccess( UploadTask.TaskSnapshot taskSnapshot ) {
-                    //put uploaded image url
-                    taskSnapshot.getMetadata().getReference().getDownloadUrl().addOnSuccessListener( new OnSuccessListener<Uri>() {
-                        @Override
-                        public void onSuccess( Uri uri ) {
-                            Map profileImageMap = new HashMap<String, String>();
-                            profileImageMap.put( "profileImageUrl", uri.toString() );
-                            mUsersDbRef.child( userIdString ).updateChildren( profileImageMap );
-                        }
-                    } );
-                }
+            //upload on storage was successfull
+            uploadTask.addOnSuccessListener( taskSnapshot -> {
+                //put uploaded image url
+                taskSnapshot.getMetadata().getReference().getDownloadUrl().addOnSuccessListener( uri -> {
+                    Map profileImageMap = new HashMap<String, String>();
+                    profileImageMap.put( "profileImageUrl", uri.toString() );
+                    mUsersDbRef.child( userIdString ).updateChildren( profileImageMap );
+                } );
             } );
 
-            uploadTask.addOnFailureListener( new OnFailureListener() {
-                @Override
-                public void onFailure( @NonNull Exception e ) {
-                    Toast.makeText( ProfileActivity.this, R.string.error_uploading_image, Toast.LENGTH_SHORT ).show();
+            uploadTask.addOnFailureListener( e -> {
+                Toast.makeText( ProfileActivity.this, R.string.error_uploading_image, Toast.LENGTH_SHORT ).show();
 //                    finish();
-                }
             } );
 
         } catch ( Exception e ) {
@@ -239,49 +221,38 @@ public class ProfileActivity extends AppCompatActivity {
 
 
     private void onPhoneNumberClick() {
-        layoutPhoneNumber.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick( View v ) {
-                AlertDialog.Builder builder = new AlertDialog.Builder( ProfileActivity.this );
-                EditText editText = new EditText( ProfileActivity.this );
-                editText.setInputType( InputType.TYPE_CLASS_PHONE );
+        layoutPhoneNumber.setOnClickListener( v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder( ProfileActivity.this );
+            EditText editText = new EditText( ProfileActivity.this );
+            editText.setInputType( InputType.TYPE_CLASS_PHONE );
 
-                builder
-                        .setTitle( R.string.phone_number )
-                        .setView( editText )
-                        .setPositiveButton( R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick( DialogInterface dialogInterface, int i ) {
-                            //Do nothing here because we override this button later to change the close behaviour.
-                            }
-                        })
-                        .setNegativeButton("Cancel", null );
+            builder
+                    .setTitle( R.string.phone_number )
+                    .setView( editText )
+                    .setPositiveButton( R.string.ok, ( dialogInterface, i ) -> {
+                    //Do nothing here because we override this button later to change the close behaviour.
+                    } )
+                    .setNegativeButton("Cancel", null );
 
-                final AlertDialog dialog = builder.create();
-                dialog.show();
+            final AlertDialog dialog = builder.create();
+            dialog.show();
 
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View v)
-                    {
-                        Boolean wantToCloseDialog = false;
-                        String editTextInput = editText.getText().toString();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener( v1 -> {
+                Boolean wantToCloseDialog = false;
+                String editTextInput = editText.getText().toString();
 
-                        if( editTextInput.length() < 8 )
-                            new CustomToast().showToast( ProfileActivity.this, v, getResources().getString( R.string.phone_number_error ) );
-                        else
-                            wantToCloseDialog = true;
+                if( editTextInput.length() < 8 )
+                    new CustomToast().showToast( ProfileActivity.this, v1, getResources().getString( R.string.phone_number_error ) );
+                else
+                    wantToCloseDialog = true;
 
-                        Map phoneNumberMap = new HashMap<String, String>();
-                        phoneNumberMap.put( "phoneNumber", editTextInput );
-                        mUsersDbRef.child( userIdString ).updateChildren( phoneNumberMap );
+                Map phoneNumberMap = new HashMap<String, String>();
+                phoneNumberMap.put( "phoneNumber", editTextInput );
+                mUsersDbRef.child( userIdString ).updateChildren( phoneNumberMap );
 
-
-                        if( wantToCloseDialog )
-                            dialog.dismiss();
-                    }
-                });
-            }
+                if( wantToCloseDialog )
+                    dialog.dismiss();
+            } );
         } );
     }
 

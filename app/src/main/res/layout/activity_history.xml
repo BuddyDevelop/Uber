@@ -1,58 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinator_layout_history"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_gravity="center|center_vertical|center_horizontal"
-    tools:context=".Activities.HistoryActivity">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/userName"
-        android:layout_width="200dp"
-        android:layout_height="100dp"
-        android:text="asd"
-        android:layout_gravity="center_horizontal|center_vertical" />
-
-    <ProgressBar
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:visibility="invisible"/>
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
-    <Switch
-        android:layout_width="50dp"
-        android:layout_height="wrap_content" />
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:id="@+id/toolbar_history"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <TextView
-        android:layout_width="200dp"
-        android:layout_height="100dp"
-        android:text="asd"
-        android:layout_gravity="center_horizontal|center_vertical"
-        android:id="@+id/userSurname"/>
+        <com.google.android.material.tabs.TabLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tabs_history" />
+    </com.google.android.material.appbar.AppBarLayout>
 
-    <TextView
-        android:layout_width="200dp"
-        android:layout_height="100dp"
-        android:text="asd"
-        android:layout_gravity="center_horizontal|center_vertical"
-        android:id="@+id/email"/>
-
-    <TextView
-        android:layout_width="200dp"
-        android:layout_height="100dp"
-        android:text="asd"
-        android:layout_gravity="center_horizontal|center_vertical"
-        android:id="@+id/isDriver"/>
-
-    <TextView
-        android:id="@+id/textView"
+    <androidx.viewpager.widget.ViewPager
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="TextView" />
+        android:layout_height="match_parent"
+        android:layout_marginBottom="?attr/actionBarSize"
+        android:id="@+id/viewPager_history"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
 
-
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

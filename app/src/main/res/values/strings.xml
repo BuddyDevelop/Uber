@@ -88,6 +88,7 @@
     <string name="no_specified">Not specified</string>
     <string name="pick_customer">Pick customer</string>
     <string name="finish_ride">Finish ride</string>
+    <string name="no_data">No data</string>
 
 
 </resources>
