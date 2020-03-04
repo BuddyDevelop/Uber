@@ -1,5 +1,6 @@
 package uber.app.Activities;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -8,7 +9,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 
 import com.google.android.material.tabs.TabLayout;
 
@@ -39,6 +43,10 @@ public class HistoryActivity extends AppCompatActivity {
         setContentView( R.layout.activity_history );
 
         ButterKnife.bind( this );
+        //change status bar icon to default( white )
+        if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ) {
+            getWindow().getDecorView().setSystemUiVisibility( View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR );
+        }
 
         initToolbar();
         initViewPager();
@@ -92,10 +100,11 @@ public class HistoryActivity extends AppCompatActivity {
         private final List<Fragment> mFragmentList = new ArrayList<>();
         private final List<String> mFragmentTitleList = new ArrayList<>();
 
-        public ViewPagerAdapter( FragmentManager manager ) {
+        private ViewPagerAdapter( FragmentManager manager ) {
             super( manager );
         }
 
+        @NonNull
         @Override
         public Fragment getItem( int position ) {
             return mFragmentList.get( position );
@@ -106,7 +115,7 @@ public class HistoryActivity extends AppCompatActivity {
             return mFragmentList.size();
         }
 
-        public void addFrag( Fragment fragment, String title ) {
+        private void addFrag( Fragment fragment, String title ) {
             mFragmentList.add( fragment );
             mFragmentTitleList.add( title );
         }
