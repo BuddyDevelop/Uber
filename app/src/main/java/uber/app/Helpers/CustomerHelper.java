@@ -69,9 +69,7 @@ public class CustomerHelper {
         this.customerId = customerId;
     }
     public void setFoundDriverID( String foundDriverID ) { this.foundDriverID = foundDriverID; }
-    public void setDriverFound( Boolean driverFound ) {
-        this.driverFound = driverFound;
-    }
+    public void setDriverFound( Boolean driverFound ) { this.driverFound = driverFound; }
     public Boolean getDriverFound() {
         return driverFound;
     }
@@ -108,7 +106,7 @@ public class CustomerHelper {
 
                     customerId = FirebaseHelper.userIdString;
                     addCustomerToDb( customerId, foundDriverID );
-                    addDriverToDb( customerId, foundDriverID );
+                    addDriverToDb( customerId, foundDriverID, latitude, longitude );
 
                     addCustomerDestinationToDb();
                     deleteAvailableDriverLocationFromDB( foundDriverID );

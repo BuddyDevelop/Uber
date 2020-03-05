@@ -1,12 +1,17 @@
 package uber.app.Interfaces;
 
 import android.annotation.SuppressLint;
+import android.location.Location;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+
+import com.google.android.gms.maps.model.LatLng;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -14,7 +19,7 @@ import static uber.app.Helpers.FirebaseHelper.mCustomerHistoryDbRef;
 import static uber.app.Helpers.FirebaseHelper.mDriverHistoryDbRef;
 
 public interface IAddHistoryRecord {
-    default void addHistoryRecord( @NonNull String customerId, @NonNull String driverId, int rating ){
+    default void addHistoryRecord( @NonNull String customerId, @NonNull String driverId, int rating, @Nullable LatLng fromLatLng, @Nullable Location toLatLng ){
         String recordId = mCustomerHistoryDbRef.child( customerId ).push().getKey();
 
         Calendar c = Calendar.getInstance();
@@ -27,6 +32,13 @@ public interface IAddHistoryRecord {
         historyRecord.put( "driverId", driverId );
         historyRecord.put( "rating", rating );
         historyRecord.put( "timestamp", datetime );
+
+        if( fromLatLng != null )
+            historyRecord.put( "fromLatLng", Arrays.asList( fromLatLng.latitude, fromLatLng.longitude ) );
+
+        if( toLatLng != null )
+            historyRecord.put( "toLatLng", Arrays.asList( toLatLng.getLatitude(), toLatLng.getLongitude() ) );
+
 
         mCustomerHistoryDbRef.child( customerId ).child( recordId ).setValue( historyRecord, ( databaseError, databaseReference ) -> {
             if( databaseError != null )

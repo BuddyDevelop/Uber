@@ -1,5 +1,6 @@
 package uber.app.Fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -7,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,9 +23,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import uber.app.Activities.HistorySingleActivity;
 import uber.app.HistoryAdapter;
 import uber.app.Models.History;
 import uber.app.R;
@@ -33,6 +35,9 @@ import uber.app.R;
 import static uber.app.Helpers.FirebaseHelper.userIdString;
 
 public class HistoryFragment extends Fragment implements HistoryAdapter.OnHistoryListener {
+    public static String HISTORY_RIDE_ID = "historyRideId";
+    public static String HISTORY_URL = "historyUrl";
+
     private HistoryAdapter mHistoryAdapter;
     private ArrayList<History> mHistoryArrayList = new ArrayList<>();
     private ArrayList<String> keys = new ArrayList<>();
@@ -55,7 +60,7 @@ public class HistoryFragment extends Fragment implements HistoryAdapter.OnHistor
     @Nullable
     @Override
     public View onCreateView( @NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState ) {
-        View view = inflater.inflate( R.layout.fragment_customer_history, container, false );
+        View view = inflater.inflate( R.layout.fragment_history, container, false );
 
         ButterKnife.bind( this, view );
         mRecyclerView.setLayoutManager( new LinearLayoutManager( getActivity().getBaseContext() ) );
@@ -105,6 +110,9 @@ public class HistoryFragment extends Fragment implements HistoryAdapter.OnHistor
 
     @Override
     public void onHistoryItemClick( int position ) {
-        Toast.makeText( getContext(), keys.get( position ) , Toast.LENGTH_SHORT ).show();
+        Intent historyDetailsIntent = new Intent( getContext(), HistorySingleActivity.class );
+        historyDetailsIntent.putExtra( HISTORY_RIDE_ID, keys.get( position ) );
+        historyDetailsIntent.putExtra( HISTORY_URL, historyPath.toString() );
+        Objects.requireNonNull( getContext() ).startActivity( historyDetailsIntent );
     }
 }

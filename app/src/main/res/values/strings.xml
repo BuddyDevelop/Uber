@@ -71,6 +71,8 @@
     <string name="driver_coming">Driver\'s coming&#8230;</string>
     <string name="your_driver">Your driver</string>
     <string name="customer_pickup">Customer pickup</string>
+    <string name="pickup_spot">Pickup spot</string>
+    <string name="destination_spot">Destination spot</string>
     <string name="no_driver_nearby">Could\'t find any driver nearby.</string>
     <string name="cannot_switch_to_customer">Cannot change to customer while you have ride!</string>
     <string name="driver_toggle_btn_not_allowed">You are not a driver or does not have internet connection.</string>
@@ -89,6 +91,10 @@
     <string name="pick_customer">Pick customer</string>
     <string name="finish_ride">Finish ride</string>
     <string name="no_data">No data</string>
+    <string name="date">Date</string>
+    <string name="id">ID</string>
+    <string name="rate_driver">Rate your driver</string>
+    <string name="distance">Distance:</string>
 
 
 </resources>

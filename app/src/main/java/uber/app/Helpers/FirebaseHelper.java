@@ -19,6 +19,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import uber.app.Activities.RegisterActivity;
@@ -172,10 +173,11 @@ public class FirebaseHelper {
         }
     }
 
-    public static void addDriverToDb( String customerId, String foundDriverID ) {
+    public static void addDriverToDb( String customerId, String foundDriverID, double customerLatitude, double customerLongitude ) {
         DatabaseReference driversFirebaseDBref = mDriversDbRef.child( foundDriverID );
         HashMap<String, Object> customerHashMap = new HashMap<>();
         customerHashMap.put( "customerId", customerId );
+        customerHashMap.put( "l", Arrays.asList( customerLatitude, customerLongitude ) );
         driversFirebaseDBref.updateChildren( customerHashMap );
     }
 

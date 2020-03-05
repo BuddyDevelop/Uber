@@ -24,11 +24,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.directions.route.AbstractRouting;
-import com.directions.route.Route;
-import com.directions.route.RouteException;
-import com.directions.route.Routing;
-import com.directions.route.RoutingListener;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -44,8 +39,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
@@ -55,9 +48,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -69,6 +62,7 @@ import uber.app.Helpers.FirebaseHelper;
 import uber.app.Fragments.LeftDrawer;
 import uber.app.Models.User;
 import uber.app.R;
+import uber.app.Routes;
 import uber.app.SharedPref;
 import uber.app.Util;
 
@@ -93,10 +87,10 @@ import static uber.app.SharedPref.DEFAULT_DOUBLE;
 import static uber.app.Util.changeMapsMyLocationButton;
 import static uber.app.Util.showRelativeLayout;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, RoutingListener {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final int REQUEST_GPS_PERMISSIONS = 1;
     private static final float MINIMUM_DISTANCE_BETWEEN_MAP_UPDATES = 10;
-    private static final long MINIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 20 * 1000; //20 sec
+    private static final long MINIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 10 * 1000; //10 sec
     private static final long MAXIMUM_TIME_INTERVAL_BETWEEN_MAP_UPDATES = 20 * 1000; //20 sec
     private static final float MAP_ZOOM = 16;
 
@@ -111,8 +105,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private Marker locationMarker;
 
-    private List< Polyline > polylines;
-    private static final int[] COLORS = new int[]{ R.color.primary_dark, R.color.md_amber_50 };
+    private Routes mRoutes;
 
     @BindView( R.id.request_uber )
     public MaterialButton mRequestUberButton;
@@ -139,6 +132,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public GoogleMap getGoogleMap() {
         return mMap;
     }
+    public Routes getRoutes() { return mRoutes; }
 
     //callback to refresh location
     public LocationCallback mLocationCallback = new LocationCallback() {
@@ -171,14 +165,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
                 if( dataSnapshot.exists() ){
 
-                    mDriversDbRef.child( userIdString ).child( "customerId" ).addListenerForSingleValueEvent( new ValueEventListener() {
+                    mDriversDbRef.child( userIdString ).addListenerForSingleValueEvent( new ValueEventListener() {
                         @Override
                         public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
                             if( dataSnapshot.exists() ) {
                                 if ( mDriverHelper == null )
                                     mDriverHelper = new DriverHelper( MapActivity.this );
-                                mDriverHelper.setCustomerId( dataSnapshot.getValue().toString() );
-                            }
+
+                                Map<String, Object> dataMap =  ( Map<String, Object> ) dataSnapshot.getValue();
+
+                                if( dataMap.get( "customerId" ) != null )
+                                    mDriverHelper.setCustomerId( dataMap.get( "customerId" ).toString() );
+                                if( dataMap.get( "l" ) != null )
+                                    mDriverHelper.setCustomerLatLng( Util.getLatLng( ( List<Object> ) dataMap.get( "l" ) ) );                            }
                         }
 
                         @Override
@@ -203,8 +202,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         //initialize shared pref if there was no instance before
         SharedPref.initialize( getApplicationContext() );
-
-        polylines = new ArrayList<>( );
 
         //get user data from firebase and save in shared pref if user is driver
         FirebaseHelper.getUserData( this );
@@ -292,6 +289,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapReady( GoogleMap googleMap ) {
         mMap = googleMap;
+        mRoutes = new Routes( this, mMap );
         //set how often update location
         initialLocationRequest();
 
@@ -606,64 +604,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } );
     }
 
-    /*
-        Route drawing
-     */
-    @Override
-    public void onRoutingFailure( RouteException e ) {
-        if( e != null && e.getMessage() != null ){
-            Log.e( "onRoutingFailure: ", e.getMessage() );
-        }
-    }
-
-    @Override
-    public void onRoutingStart() {  }
-
-    @Override
-    public void onRoutingSuccess( ArrayList<Route> route, int shortestRouteIndex ) {
-        if( polylines.size() > 0 ) {
-            for ( Polyline poly : polylines ) {
-                poly.remove();
-            }
-        }
-
-        polylines = new ArrayList<>();
-        //add route(s) to the map.
-        for ( int i = 0; i < route.size(); i++ ) {
-            int colorIndex;
-            colorIndex = i == 0 ? i : 1;
-
-
-            PolylineOptions polyOptions = new PolylineOptions();
-            polyOptions.color( getResources().getColor( COLORS[ colorIndex ] ) );
-            if( i == 0 )
-                polyOptions.width( 22 );
-            else
-                polyOptions.width( 14 );
-            polyOptions.addAll( route.get( i ).getPoints() );
-            Polyline polyline = mMap.addPolyline( polyOptions );
-            this.polylines.add( polyline );
-        }
-    }
-
-    @Override
-    public void onRoutingCancelled() {  }
-
-    public void getRouteToLocation( LatLng currentLatLng, LatLng destinationLatLng ){
-        Routing routing = new Routing.Builder()
-                .travelMode( AbstractRouting.TravelMode.DRIVING )
-                .withListener( this )
-                .alternativeRoutes( true )
-                .waypoints( currentLatLng, destinationLatLng )
-                .key( getResources().getString( R.string.google_api_key ) )
-                .build();
-        routing.execute();
-    }
-
-      /*
-        END Route drawing
-     */
-
     public void getCustomerDestination( String customerId ){
         mCustomerDestinationDbRef.child( customerId ).child( "destination" ).addListenerForSingleValueEvent( new ValueEventListener() {
             @Override
@@ -683,60 +623,72 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     //on driver screen btn to pickup customer and end ride
     @OnClick( R.id.pickup_customer_btn )
-    public void pickUpCustomer(){
+    public void changeRideStatus(){
         String btnText = mPickupCustomerBtn.getText().toString();
 
         //pick up customer
-        if( btnText.equals( getResources().getString( R.string.pick_customer ) ) ){
-            if( mDriverHelper != null ){
-                clearMap();
+        if( btnText.equals( getResources().getString( R.string.pick_customer ) ) )
+            pickUpCustomer();
+        else
+            finishRide();
+    }
 
-                //if customer have destination draw route
-                String customerId = mDriverHelper.getCustomerId();
-                if( customerId != null ){
-                    mCustomerDestinationDbRef.child( customerId ).child( "l" ).addListenerForSingleValueEvent( new ValueEventListener() {
-                        @Override
-                        public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
-                            if( dataSnapshot.exists() ){
-                                List<Object> customerDestination = ( List<Object> ) dataSnapshot.getValue();
-                                LatLng customerLatLngDestination = Util.getLatLng( customerDestination );
+    private void pickUpCustomer(){
+        if( mDriverHelper != null ){
+            clearMap();
 
-                                //create route to customers destination
-                                if( customerLatLngDestination != null && mLastLocation != null ){
-                                    getRouteToLocation( new LatLng( mLastLocation.getLatitude(), mLastLocation.getLongitude() ),
-                                            customerLatLngDestination );
+            //if customer have destination draw route
+            String customerId = mDriverHelper.getCustomerId();
+            if( customerId != null ){
+                mCustomerDestinationDbRef.child( customerId ).child( "l" ).addListenerForSingleValueEvent( new ValueEventListener() {
+                    @Override
+                    public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
+                        if( dataSnapshot.exists() ){
+                            List<Object> customerDestination = ( List<Object> ) dataSnapshot.getValue();
+                            LatLng customerLatLngDestination = Util.getLatLng( customerDestination );
 
-                                    addMarkerWithTitleAndIcon( customerLatLngDestination, getResources().getString( R.string.customer_destination ),
-                                            BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ) );
-                                }
+                            //create route to customers destination
+                            if( customerLatLngDestination != null && mLastLocation != null ){
+                                mRoutes.getRouteToLocation( new LatLng( mLastLocation.getLatitude(), mLastLocation.getLongitude() ),
+                                        customerLatLngDestination, true );
+
+                                addMarkerWithTitleAndIcon( customerLatLngDestination, getResources().getString( R.string.customer_destination ),
+                                        BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ) );
                             }
                         }
+                    }
 
-                        @Override
-                        public void onCancelled( @NonNull DatabaseError databaseError ) {
-                            Log.e( "err", "pickUpCustomer: " + databaseError.getMessage()  );
-                        }
-                    } );
-                }
-
-                 mPickupCustomerBtn.setText( R.string.finish_ride );
-            }
-        } else{
-            //set this button text to initial
-            mPickupCustomerBtn.setText( R.string.pick_customer );
-            Util.changeButtonVisibility( mPickupCustomerBtn, false );
-
-            if( mDriverHelper != null && mDriverHelper.getCustomerId() != null ) {
-                String customerId = mDriverHelper.getCustomerId();
-                mDriverHelper.addHistoryRecord( customerId, userIdString, 0 );
-                deleteCustomerFromDb( customerId );
-                deleteCustomerRequestFromDB( customerId );
-                removeCustomerDestinationFromDb( customerId );
+                    @Override
+                    public void onCancelled( @NonNull DatabaseError databaseError ) {
+                        Log.e( "err", "pickUpCustomer: " + databaseError.getMessage()  );
+                    }
+                } );
             }
 
-            deleteWorkingDriverLocationFromDB( userIdString );
-            deleteDriverFromDb( userIdString );
-            resetDriverHelper();
+            mPickupCustomerBtn.setText( R.string.finish_ride );
         }
+    }
+
+    private void finishRide(){
+        //set this button text to initial
+        mPickupCustomerBtn.setText( R.string.pick_customer );
+        Util.changeButtonVisibility( mPickupCustomerBtn, false );
+
+        //prepare data to save in db
+        if( mDriverHelper != null && mDriverHelper.getCustomerId() != null ) {
+            String customerId = mDriverHelper.getCustomerId();
+            LatLng customerPickupLocation = mDriverHelper.getCustomerLatLng();
+
+            mDriverHelper.addHistoryRecord( customerId, userIdString, 0, customerPickupLocation, mLastLocation );
+
+            //delete from database
+            deleteCustomerFromDb( customerId );
+            deleteCustomerRequestFromDB( customerId );
+            removeCustomerDestinationFromDb( customerId );
+        }
+
+        deleteWorkingDriverLocationFromDB( userIdString );
+        deleteDriverFromDb( userIdString );
+        resetDriverHelper();
     }
 }

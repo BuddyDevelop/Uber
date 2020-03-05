@@ -75,4 +75,11 @@
     <string name="no_specified">Nie określono</string>
     <string name="pick_customer">Odbierz klienta</string>
     <string name="user_destination_colon">Dokąd:</string>
+    <string name="date">Data</string>
+    <string name="id">ID</string>
+    <string name="no_data">Brak danych</string>
+    <string name="pickup_spot">Miejsce odbioru</string>
+    <string name="destination_spot">Miejsce docelowe</string>
+    <string name="distance">Dystans:</string>
+    <string name="rate_driver">Oceń swojego kierowcę</string>
 </resources>

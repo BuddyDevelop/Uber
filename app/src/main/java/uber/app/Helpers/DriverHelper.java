@@ -29,12 +29,15 @@ public class DriverHelper implements IAddHistoryRecord {
 
     private MapActivity mMapActivity;
     private String customerId;
+    private LatLng customerLatLng;
 
     public DriverHelper( MapActivity mMapActivity ) {
         this.mMapActivity = mMapActivity;
     }
     public String getCustomerId() { return customerId; }
     public void setCustomerId( String customerId ) { this.customerId = customerId; }
+    public LatLng getCustomerLatLng() { return customerLatLng; }
+    public void setCustomerLatLng( LatLng customerLatLng ) { this.customerLatLng = customerLatLng; }
 
     public void getAssignedCustomer() {
         //if user is not a driver
@@ -77,7 +80,7 @@ public class DriverHelper implements IAddHistoryRecord {
             public void onDataChange( @NonNull DataSnapshot dataSnapshot ) {
                 if ( dataSnapshot.exists() ) {
                     List<Object> customerLocation = ( List<Object> ) dataSnapshot.getValue();
-                    LatLng customerLatLng = Util.getLatLng( customerLocation );
+                    customerLatLng = Util.getLatLng( customerLocation );
 
                     if( customerLatLng != null ) {
                         String customerLocationMarker = mMapActivity.getResources().getString( R.string.customer_pickup );
@@ -89,7 +92,7 @@ public class DriverHelper implements IAddHistoryRecord {
                         if ( driverLocation != null ) {
                             LatLng driverLatLng = new LatLng( driverLocation.getLatitude(), driverLocation.getLongitude() );
                             //create route to customer
-                            mMapActivity.getRouteToLocation( driverLatLng, customerLatLng );
+                            mMapActivity.getRoutes().getRouteToLocation( driverLatLng, customerLatLng, true );
                         }
                     }
                 }

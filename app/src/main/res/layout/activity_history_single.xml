@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".Activities.HistorySingleActivity">
+
+    <fragment
+        android:layout_width="match_parent"
+        android:layout_height="290dp"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:id="@+id/history_map" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_margin="10dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/date"
+            android:layout_margin="10dp"
+            android:textSize="@dimen/text_big"
+            android:textStyle="bold"
+            android:id="@+id/ride_date" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/distance"
+                android:layout_margin="10dp"
+                android:textSize="@dimen/text_big" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/ride_distance"
+                android:layout_margin="10dp"
+                android:textSize="@dimen/text_big" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="10dp">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:id="@+id/user_profile_image_history"
+            android:src="@drawable/profile_image"
+            android:contentDescription="@string/user_profile_image" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_margin="10dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/user_name_colon"
+                android:layout_margin="10dp"
+                android:textSize="@dimen/text_big"
+                android:id="@+id/user_name_history" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/phone_number_colon"
+                android:layout_margin="10dp"
+                android:textSize="@dimen/text_big"
+                android:id="@+id/user_phone_history" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:textSize="@dimen/text_big"-->
+        <!--android:paddingBottom="5dp"-->
+        <!--android:text="@string/rate_driver" />-->
+
+    <!--<RatingBar-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/rating_bar"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:numStars="5"-->
+        <!--android:stepSize="0.5" />-->
+</LinearLayout>
