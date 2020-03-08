@@ -95,6 +95,8 @@
     <string name="id">ID</string>
     <string name="rate_driver">Rate your driver</string>
     <string name="distance">Distance:</string>
+    <string name="distance_value" translatable="false">%1$dm</string>
+    <string name="user_full_name_value" translatable="false">%1$s %2$s</string>
 
 
 </resources>

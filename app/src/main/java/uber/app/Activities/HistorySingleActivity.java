@@ -75,13 +75,13 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         ButterKnife.bind( this );
         initToolbar();
         getBundles();
-        getHistoryDetails();
     }
 
     @Override
     public void onMapReady( GoogleMap googleMap ) {
         mMap = googleMap;
         mRoutes = new Routes( this, mMap );
+        getHistoryDetails();
     }
 
     private void getBundles(){
@@ -148,7 +148,7 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         addMarkerWithTitleAndIcon( toLatLng, toMarkerTitle, BitmapDescriptorFactory.fromResource( R.mipmap.ic_map_destination ) );
 
         int distance = ( int ) Util.calculateDistance( fromLatLng.latitude, fromLatLng.longitude, toLatLng.latitude, toLatLng.longitude );
-        rideDistance.setText(  distance + "m" );
+        rideDistance.setText(  getString( R.string.distance_value, distance ) );
 
         mMap.moveCamera( CameraUpdateFactory.newLatLngZoom( fromLatLng, MAP_ZOOM ) );
     }
@@ -160,7 +160,7 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         String userPhoneString = user.getPhoneNumber();
         String userImage = user.getProfileImageUrl();
 
-        userName.setText( user.getName() + " " + user.getSurname() );
+        userName.setText( getString( R.string.user_full_name_value, user.getName(), user.getSurname() )  );
 
         if( userPhoneString != null && !userPhoneString.isEmpty() )
             userPhone.setText( user.getPhoneNumber() );

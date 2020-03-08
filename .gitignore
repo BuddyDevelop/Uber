@@ -11,3 +11,17 @@
 /build
 /captures
 .externalNativeBuild
+/gradlew
+app/google-services.json
+app/libs/
+app/src/main/java/uber/app/Daos/
+app/src/main/java/uber/app/DatabaseModels/
+app/src/main/java/uber/app/Databases/
+app/src/main/java/uber/app/Repositories/
+app/src/main/res/drawable/cyberspace.jpg
+app/src/main/res/drawable/digital.jpg
+app/src/main/res/values/google_maps_api.xml
+app/src/release/
+/.gitignore
+/settings.gradle
+/.idea/misc.xml

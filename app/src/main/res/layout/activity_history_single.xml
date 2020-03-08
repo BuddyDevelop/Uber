@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:fillViewport="true"
     tools:context=".Activities.HistorySingleActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
     <fragment
         android:layout_width="match_parent"
         android:layout_height="290dp"
@@ -103,4 +107,5 @@
         <!--android:layout_gravity="center"-->
         <!--android:numStars="5"-->
         <!--android:stepSize="0.5" />-->
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

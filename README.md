@@ -32,6 +32,12 @@ Customers history             | Drivers history
 :-------------------------:|:-------------------------:
 <img src="https://user-images.githubusercontent.com/48919056/75863299-873aa580-5e00-11ea-971b-9592cfb45d5a.jpg" alt="Customer history view" width="350" height="730px"/> |  <img src="https://user-images.githubusercontent.com/48919056/75863366-a0435680-5e00-11ea-9a64-418c10bd532c.jpg" alt="Drivers history view" width="350" height="730px"/>
 
+History details.
+<p align="middle">
+  <img src="https://user-images.githubusercontent.com/48919056/76167936-bf2c4a80-616a-11ea-802e-796ceaa480ce.jpg" alt="history details" width="350" height="730px"/>
+</p>
+
+
 
 **Libraries used in this project:**
 - **[MaterialDrawer](https://github.com/mikepenz/MaterialDrawer)**

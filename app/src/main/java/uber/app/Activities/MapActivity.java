@@ -102,6 +102,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private DriverHelper mDriverHelper;
     public LeftDrawer leftDrawer;
 
+    private SupportMapFragment mapFragment;
     private GoogleMap mMap;
     private Marker locationMarker;
 
@@ -196,7 +197,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_map );
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = ( SupportMapFragment ) getSupportFragmentManager()
+        mapFragment = ( SupportMapFragment ) getSupportFragmentManager()
                 .findFragmentById( R.id.map );
         mapFragment.getMapAsync( this );
 
@@ -213,8 +214,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         //set toolbar
         setToolbar();
-        //change location of my location button on map
-        changeMapsMyLocationButton( this, mapFragment );
+//        //change location of my location button on map
         //set left drawer
         leftDrawer = new LeftDrawer( this, mToolbar );
         leftDrawer.initDrawer();
@@ -292,6 +292,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mRoutes = new Routes( this, mMap );
         //set how often update location
         initialLocationRequest();
+        //change location of my location button on map
+        changeMapsMyLocationButton( this, mapFragment );
 
         if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
             if ( ContextCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
@@ -588,7 +590,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if( dataSnapshot.exists() ){
                     showUserInfo();
                     User user = dataSnapshot.getValue( User.class );
-                    setUserName( user.getName() + " " + user.getSurname() );
+                    setUserName( getString( R.string.user_full_name_value, user.getName(), user.getSurname() ) );
                     setUserPhone( user.getPhoneNumber() );
 
                     String userImage = user.getProfileImageUrl();
